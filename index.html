@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mapa do Congresso 2027</title>
+<meta name="description" content="Perfis dos parlamentares eleitos e a composição do Congresso Nacional na próxima legislatura.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <a class="brand" href="#/"><span class="dot"></span>Mapa do Congresso<small>Legislatura 2027–2031</small></a>
+    <nav>
+      <a href="#/" data-nav="home">Panorama</a>
+      <a href="#/parlamentares" data-nav="lista">Parlamentares</a>
+      <a href="#/sobre" data-nav="sobre">Sobre e metodologia</a>
+      <a href="#/analises" data-nav="analises">Análises <span class="tag">em construção</span></a>
+    </nav>
+    <p class="aviso">Protótipo com <b>dados fictícios</b>.</p>
+  </aside>
+  <main id="view" tabindex="-1"></main>
+</div>
+<button class="menu-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+<script src="data/dados.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
