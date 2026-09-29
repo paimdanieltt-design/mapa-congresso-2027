@@ -14,7 +14,7 @@ nav a:hover{background:var(--surface)}
 nav a.on{background:var(--blue-soft);color:var(--blue);font-weight:600}
 .tag{font-size:11px;background:var(--surface);border:1px solid var(--line);padding:1px 7px;border-radius:99px;margin-left:4px}
 .aviso{margin-top:auto;font-size:13px;color:var(--muted)}
-main{padding:72px clamp(16px,4vw,56px) 80px;max-width:1120px;width:100%;outline:none}
+main{padding:72px clamp(16px,4vw,56px) 80px;max-width:1120px;width:100%;margin:0 auto;outline:none}
 h1{font-size:30px;line-height:1.2;margin:0 0 6px}
 h2{font-size:18px;margin:40px 0 14px}
 .lead{color:var(--muted);margin:0 0 28px;max-width:60ch}
