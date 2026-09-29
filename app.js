@@ -73,6 +73,10 @@ function lista(){
   render();
 }
 
+function relacionadas(p){
+  const r = (window.NOTICIAS || []).filter(n => (n.parlamentares||[]).includes(p.id));
+  return r.length ? `<h2>Notícias</h2><div class="news">${r.map(ncard).join("")}</div>` : "";
+}
 function ficha(id){
   const p = D.find(x => x.id === +id);
   if(!p){ view.innerHTML = `<a class="back" href="#/parlamentares">← Voltar</a><h1>Perfil não encontrado</h1>`; return; }
@@ -87,7 +91,8 @@ function ficha(id){
     <dt>Página oficial</dt><dd>${link(p.pagina_oficial,"Abrir")}</dd>
     <dt>Redes</dt><dd>${Object.entries(p.redes).filter(([,v])=>v).map(([k,v])=>link(v,k)).join(" · ")||"—"}</dd></dl>
     <h2>Trajetória política</h2><p>${esc(p.trajetoria)}</p>
-    <h2>Fontes</h2><ul>${p.fontes.map(f=>`<li>${link(f,esc(f))}</li>`).join("")}</ul></div></div>`;
+    <h2>Fontes</h2><ul>${p.fontes.map(f=>`<li>${link(f,esc(f))}</li>`).join("")}</ul>
+    ${relacionadas(p)}</div></div>`;
 }
 
 
@@ -111,6 +116,48 @@ function estatisticas(){
   const c = $("#s_clr"); if(c) c.onclick = () => { ["casa","partido","uf","situacao","tema"].forEach(k=>S[k]=""); estatisticas(); };
 }
 
+const N = (window.NOTICIAS || []).slice().sort((a,b) => (b.data||"").localeCompare(a.data||""));
+const fmtData = d => d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"}) : "";
+const ncard = n => `<a class="ncard" href="${esc(n.url)}" target="_blank" rel="noopener"><div class="img">${n.imagem?`<img src="${esc(n.imagem)}" alt="" loading="lazy" onerror="this.replaceWith('Sem prévia')">`:"Sem prévia"}</div>
+  <div class="body"><small>${esc(n.veiculo)}${n.data?" · "+fmtData(n.data):""}</small><h3>${esc(n.titulo)}</h3><p>${esc(n.resumo)}</p>
+  <div>${(n.tags||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div><span class="go">Ler reportagem ↗</span></div></a>`;
+const NF = {q:"",tag:"",veiculo:""};
+function noticias(){
+  const opts = (arr,ph,v) => `<option value="">${ph}</option>` + [...new Set(arr)].sort().map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("");
+  view.innerHTML = `<h1>Notícias</h1><p class="lead">Reportagens sobre o Congresso e os parlamentares, com prévia. Clique para ler na fonte original.</p>
+  <div class="filters"><input id="n_q" type="search" placeholder="Buscar por título ou resumo…" value="${esc(NF.q)}">
+    <select id="n_tag" class="${NF.tag?"ativo":""}">${opts(N.flatMap(n=>n.tags||[]),"Tema",NF.tag)}</select>
+    <select id="n_veiculo" class="${NF.veiculo?"ativo":""}">${opts(N.map(n=>n.veiculo),"Veículo",NF.veiculo)}</select>
+    <button class="clear" id="n_clr" type="button" ${NF.q||NF.tag||NF.veiculo?"":"hidden"}>Limpar filtros</button></div>
+  <div class="count" id="n_cnt"></div><div class="news" id="n_list"></div>
+  <details class="add"><summary>+ Adicionar notícia</summary>
+    <p class="hint">Preencha os campos e copie o código gerado para o final da lista em <code>data/noticias.js</code>. (O site é estático, então a lista é editada no arquivo.) Para a imagem de prévia, use o link da imagem da reportagem (botão direito → copiar endereço da imagem).</p>
+    <form id="n_form" onsubmit="return false">
+      <label class="full">Título<input name="titulo"></label><label>Veículo<input name="veiculo" placeholder="Ex.: Folha, Nexo, Agência Senado"></label>
+      <label>Data<input name="data" type="date"></label><label class="full">Link da reportagem<input name="url" type="url" placeholder="https://…"></label>
+      <label class="full">Link da imagem de prévia (opcional)<input name="imagem" type="url"></label>
+      <label class="full">Resumo<textarea name="resumo" rows="2"></textarea></label>
+      <label>Temas (separados por vírgula)<input name="tags" placeholder="Economia, Saúde"></label>
+      <label>IDs de parlamentares citados (opcional)<input name="parl" placeholder="3, 17"></label>
+      <div class="full"><pre id="n_out"></pre><button class="clear" id="n_copy" type="button" style="margin-top:10px">Copiar código</button></div></form></details>`;
+  const draw = () => {
+    const q = NF.q.trim().toLowerCase();
+    const r = N.filter(n => (!q||(n.titulo+" "+n.resumo).toLowerCase().includes(q)) && (!NF.tag||(n.tags||[]).includes(NF.tag)) && (!NF.veiculo||n.veiculo===NF.veiculo));
+    $("#n_cnt").textContent = `${r.length} notícia${r.length===1?"":"s"}`;
+    $("#n_list").innerHTML = r.map(ncard).join("") || `<p class="lead">Nenhuma notícia encontrada.</p>`;
+  };
+  draw();
+  $("#n_q").oninput = e => { NF.q = e.target.value; draw(); };
+  ["tag","veiculo"].forEach(k => $("#n_"+k).onchange = e => { NF[k] = e.target.value; noticias(); });
+  $("#n_clr").onclick = () => { NF.q = NF.tag = NF.veiculo = ""; noticias(); };
+  const f = $("#n_form"), out = $("#n_out");
+  const gen = () => { const v = Object.fromEntries(new FormData(f));
+    const list = s => (s||"").split(",").map(x=>x.trim()).filter(Boolean);
+    out.textContent = "  " + JSON.stringify({titulo:v.titulo,veiculo:v.veiculo,data:v.data,url:v.url,imagem:v.imagem,resumo:v.resumo,tags:list(v.tags),parlamentares:list(v.parl).map(Number).filter(Boolean)},null,2).replace(/\n/g,"\n  ") + ","; };
+  f.oninput = gen; gen();
+  $("#n_copy").onclick = async e => { try{ await navigator.clipboard.writeText(out.textContent); e.target.textContent = "Copiado!"; }catch(_){ e.target.textContent = "Selecione e copie manualmente"; } setTimeout(()=>e.target.textContent="Copiar código",1800); };
+}
+
 const sobre = () => view.innerHTML = `<h1>Sobre e metodologia</h1><p class="lead">Espaço para explicar o objetivo do projeto, quem faz e como os perfis são produzidos.</p>
   <div class="card"><h3>Como um perfil chega ao site</h3><p>A fazer → Em produção → Em revisão → Ajustes → <b>Aprovado</b>. Só perfis aprovados são publicados, e toda informação tem fonte linkada.</p></div>
   <h2>Equipe</h2><p class="lead">[a preencher]</p><h2>Contato</h2><p class="lead">[a preencher]</p>`;
@@ -119,7 +166,7 @@ const wip = () => view.innerHTML = `<h1>Análises</h1><p class="lead">Cruzamento
 function route(){
   const h = location.hash.replace(/^#\/?/,"").split("/");
   const r = h[0] || "home";
-  ({home, parlamentares:lista, parlamentar:()=>ficha(h[1]), sobre, estatisticas, analises:wip}[r] || home)();
+  ({home, parlamentares:lista, parlamentar:()=>ficha(h[1]), sobre, estatisticas, noticias, analises:wip}[r] || home)();
   document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (r==="parlamentar"?"lista":r==="parlamentares"?"lista":r)));
   if(mob.matches) menu(false); window.scrollTo(0,0);
 }
