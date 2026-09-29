@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel das Eleições · Volpatti Advogados Associados</title>
+<meta name="description" content="Painel das eleições 2026: presidenciais, pesquisas, conjuntura política, Congresso e governos estaduais, com os informes da Volpatti Advogados Associados.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <a class="brand" href="#/" aria-label="Volpatti Advogados Associados — Painel das Eleições">
+      <svg class="logo" viewBox="0 0 100 72" aria-hidden="true">
+        <rect x="0" y="0" width="100" height="6"/>
+        <rect x="0" y="9" width="5" height="46"/>
+        <path d="M10 12 L34 17 V50 C22 49 11 42 10 12Z"/>
+        <path d="M40 17 C62 20 82 16 100 10 V18 C80 24 58 24 54 40 C53 47 52 50 50 50 C43 46 40 36 40 17Z"/>
+        <path d="M10 62 C14 55 20 53 34 53 V62Z"/>
+        <path d="M40 62 C42 55 46 53 56 53 H100 V62Z"/>
+        <rect x="0" y="66" width="100" height="5"/>
+      </svg>
+      <span class="wm">VOLPATTI<small>Advogados Associados</small></span>
+    </a>
+    <div class="painel-nome">Painel das Eleições <b>2026</b></div>
+    <nav>
+      <a href="#/" data-nav="home">Panorama</a>
+      <a href="#/presidencial" data-nav="presidencial">Eleições presidenciais</a>
+      <a href="#/pesquisas" data-nav="pesquisas">Pesquisas eleitorais</a>
+      <a href="#/conjuntura" data-nav="conjuntura">Conjuntura política</a>
+      <a href="#/congresso" data-nav="congresso">Congresso Nacional</a>
+      <a href="#/governos" data-nav="governos">Governos estaduais</a>
+      <a href="#/informes" data-nav="informes">Informes Volpatti</a>
+      <a href="#/sobre" data-nav="sobre">Sobre e metodologia</a>
+    </nav>
+    <p class="aviso"><b>Versão esqueleto.</b> Todos os números e nomes são <b>fictícios</b>, apenas para demonstrar o modelo.</p>
+  </aside>
+  <main id="view" tabindex="-1"></main>
+</div>
+<button class="menu-btn" id="menuBtn" aria-label="Abrir menu" aria-expanded="false">☰</button>
+<div class="backdrop" id="backdrop"></div>
+<script src="data/dados.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
