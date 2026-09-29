@@ -15,13 +15,15 @@
       <a href="#/" data-nav="home">Panorama</a>
       <a href="#/parlamentares" data-nav="lista">Parlamentares</a>
       <a href="#/sobre" data-nav="sobre">Sobre e metodologia</a>
+      <a href="#/estatisticas" data-nav="estatisticas">Estatísticas</a>
       <a href="#/analises" data-nav="analises">Análises <span class="tag">em construção</span></a>
     </nav>
     <p class="aviso">Protótipo com <b>dados fictícios</b>.</p>
   </aside>
   <main id="view" tabindex="-1"></main>
 </div>
-<button class="menu-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+<button class="menu-btn" id="menuBtn" aria-label="Abrir menu" aria-expanded="false">☰</button>
+<div class="backdrop" id="backdrop"></div>
 <script src="data/dados.js"></script>
 <script src="app.js"></script>
 </body>

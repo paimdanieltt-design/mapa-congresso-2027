@@ -57,11 +57,16 @@ function lista(){
     <select id="partido">${opts(D.map(p=>p.partido),"Partido")}</select>
     <select id="situacao">${opts(D.map(p=>p.situacao),"Situação")}</select>
     <select id="tema">${opts(D.flatMap(p=>p.areas),"Tema")}</select>
+    <button class="clear" id="clr" type="button">Limpar filtros</button>
   </div><div class="count" id="cnt"></div><div class="cards" id="cards"></div>`;
   Object.keys(F).forEach(k => { const el = $("#"+k); if(k!=="q") el.value = F[k]; el.oninput = () => { F[k]=el.value; render(); }; });
+  $("#clr").onclick = () => { Object.keys(F).forEach(k => F[k]=""); lista(); };
   const render = () => {
     const q = F.q.trim().toLowerCase();
     const r = D.filter(p => (!q||p.nome.toLowerCase().includes(q)) && (!F.casa||p.casa===F.casa) && (!F.uf||p.uf===F.uf) && (!F.partido||p.partido===F.partido) && (!F.situacao||p.situacao===F.situacao) && (!F.tema||p.areas.includes(F.tema))).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
+    const ativos = Object.values(F).some(v => v);
+    $("#clr").hidden = !ativos;
+    Object.keys(F).forEach(k => k!=="q" && $("#"+k).classList.toggle("ativo", !!F[k]));
     $("#cnt").textContent = `${r.length} parlamentar${r.length===1?"":"es"}`;
     $("#cards").innerHTML = r.map(p => `<a class="pcard" href="#/parlamentar/${p.id}">${avatar(p)}<div><b>${esc(p.nome)}</b><small>${esc(p.partido)}/${esc(p.uf)} · ${p.casa==="Senado Federal"?"Senado":"Câmara"}</small></div></a>`).join("") || `<p class="lead">Nenhum resultado.</p>`;
   };
@@ -85,6 +90,27 @@ function ficha(id){
     <h2>Fontes</h2><ul>${p.fontes.map(f=>`<li>${link(f,esc(f))}</li>`).join("")}</ul></div></div>`;
 }
 
+
+const S = {casa:"",partido:"",uf:"",situacao:"",tema:"",por:"uf",tipo:"barras"};
+const DIMS = {uf:["Estado",p=>p.uf],partido:["Partido",p=>p.partido],situacao:["Situação",p=>p.situacao],tema:["Área temática",p=>p.areas],casa:["Casa",p=>p.casa],espectro:["Posição ideológica",p=>p.espectro]};
+function estatisticas(){
+  const opts = (arr,ph,v) => `<option value="">${ph}</option>` + [...new Set(arr)].sort().map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("");
+  const sel = (id,arr,ph) => `<select id="s_${id}" class="${S[id]?"ativo":""}">${opts(arr,ph,S[id])}</select>`;
+  const r = D.filter(p => (!S.casa||p.casa===S.casa)&&(!S.partido||p.partido===S.partido)&&(!S.uf||p.uf===S.uf)&&(!S.situacao||p.situacao===S.situacao)&&(!S.tema||p.areas.includes(S.tema)));
+  const dados = count(r, DIMS[S.por][1]);
+  const ativos = ["casa","partido","uf","situacao","tema"].some(k=>S[k]);
+  view.innerHTML = `<h1>Estatísticas</h1><p class="lead">Escolha filtros e como dividir os resultados. Exemplo: filtre o Partido A e divida por Estado.</p>
+  <div class="dim"><b style="font-size:14px">Filtrar</b><div class="filters">
+    ${sel("casa",D.map(p=>p.casa),"Casa")}${sel("partido",D.map(p=>p.partido),"Partido")}${sel("uf",D.map(p=>p.uf),"UF")}${sel("situacao",D.map(p=>p.situacao),"Situação")}${sel("tema",D.flatMap(p=>p.areas),"Tema")}
+    ${ativos?'<button class="clear" id="s_clr" type="button">Limpar filtros</button>':""}</div>
+    <div class="filters"><label class="field">Dividir por<select id="s_por">${Object.entries(DIMS).map(([k,[n]])=>`<option value="${k}"${k===S.por?" selected":""}>${n}</option>`).join("")}</select></label>
+    <label class="field">Gráfico<select id="s_tipo"><option value="barras"${S.tipo==="barras"?" selected":""}>Barras</option><option value="rosca"${S.tipo==="rosca"?" selected":""}>Rosca</option></select></label></div></div>
+  <div class="kpis"><div class="kpi"><b>${r.length}</b><span>parlamentares no filtro</span></div><div class="kpi"><b>${Math.round(r.length/D.length*100)}%</b><span>do total</span></div><div class="kpi"><b>${dados.length}</b><span>grupos em “${DIMS[S.por][0]}”</span></div></div>
+  <div class="card"><h3>Parlamentares por ${DIMS[S.por][0].toLowerCase()}</h3>${!r.length?'<p class="lead">Nenhum parlamentar com esses filtros.</p>':S.tipo==="rosca"?donut(dados.slice(0,8)):bars(dados.slice(0,20))}</div>`;
+  ["casa","partido","uf","situacao","tema","por","tipo"].forEach(k => $("#s_"+k).onchange = e => { S[k]=e.target.value; estatisticas(); });
+  const c = $("#s_clr"); if(c) c.onclick = () => { ["casa","partido","uf","situacao","tema"].forEach(k=>S[k]=""); estatisticas(); };
+}
+
 const sobre = () => view.innerHTML = `<h1>Sobre e metodologia</h1><p class="lead">Espaço para explicar o objetivo do projeto, quem faz e como os perfis são produzidos.</p>
   <div class="card"><h3>Como um perfil chega ao site</h3><p>A fazer → Em produção → Em revisão → Ajustes → <b>Aprovado</b>. Só perfis aprovados são publicados, e toda informação tem fonte linkada.</p></div>
   <h2>Equipe</h2><p class="lead">[a preencher]</p><h2>Contato</h2><p class="lead">[a preencher]</p>`;
@@ -93,10 +119,19 @@ const wip = () => view.innerHTML = `<h1>Análises</h1><p class="lead">Cruzamento
 function route(){
   const h = location.hash.replace(/^#\/?/,"").split("/");
   const r = h[0] || "home";
-  ({home, parlamentares:lista, parlamentar:()=>ficha(h[1]), sobre, analises:wip}[r] || home)();
+  ({home, parlamentares:lista, parlamentar:()=>ficha(h[1]), sobre, estatisticas, analises:wip}[r] || home)();
   document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (r==="parlamentar"?"lista":r==="parlamentares"?"lista":r)));
-  $("#side").classList.remove("open"); window.scrollTo(0,0);
+  if(mob.matches) menu(false); window.scrollTo(0,0);
 }
-$("#menuBtn").onclick = () => $("#side").classList.toggle("open");
+const mob = matchMedia("(max-width:860px)"), app = $(".app"), side = $("#side"), btn = $("#menuBtn");
+const aberto = () => mob.matches ? side.classList.contains("open") : !app.classList.contains("collapsed");
+function sync(){ const o = aberto(); btn.textContent = o ? "✕" : "☰"; btn.setAttribute("aria-expanded", o); btn.setAttribute("aria-label", o ? "Fechar menu" : "Abrir menu"); $("#backdrop").classList.toggle("on", mob.matches && o); }
+function menu(abrir){ if(mob.matches) side.classList.toggle("open", abrir); else { app.classList.toggle("collapsed", !abrir); try{ localStorage.setItem("menu", abrir?"1":"0"); }catch(e){} } sync(); }
+btn.onclick = () => menu(!aberto());
+$("#backdrop").onclick = () => menu(false);
+addEventListener("keydown", e => { if(e.key==="Escape" && aberto() && mob.matches) menu(false); });
+mob.onchange = () => { side.classList.remove("open"); sync(); };
+try{ if(localStorage.getItem("menu")==="0") app.classList.add("collapsed"); }catch(e){}
+sync();
 addEventListener("hashchange", route); route();
 })();
