@@ -2,7 +2,7 @@
 const D = window.DADOS.filter(p => p.status === "Aprovado");
 const $ = s => document.querySelector(s);
 const view = $("#view");
-const COR = ["#1f4fd8","#5b84ee","#98a2b3","#c3c9d4","#0e2a80","#8fa9f2","#667085","#dfe3ea"];
+const COR = ["#1f4fd8","#65a59c","#5d85ed","#8cc671","#427cad","#338e22","#99a3b7","#c5ccdc"];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ini = n => n.split(" ").filter(Boolean).slice(0,2).map(w => w[0]).join("");
 const count = (arr, f) => { const m = {}; arr.forEach(x => [].concat(f(x)).forEach(k => m[k] = (m[k]||0)+1)); return Object.entries(m).sort((a,b) => b[1]-a[1]); };
@@ -27,8 +27,8 @@ function home(){
   const base = casa==="Ambas" ? D : D.filter(p => p.casa===casa);
   const nova = base.filter(p => p.situacao==="Novato").length;
   view.innerHTML = `
-  <h1>Panorama do Congresso</h1>
-  <p class="lead">Como será a composição da próxima legislatura. Filtre por Casa e explore os números.</p>
+  <div class="hero"><h1>Panorama do Congresso</h1>
+  <p class="lead">Como será a composição da próxima legislatura. Filtre por Casa e explore os números.</p></div>
   <div class="seg" id="seg">${["Ambas","Câmara dos Deputados","Senado Federal"].map(c=>`<button class="${c===casa?"on":""}">${c}</button>`).join("")}</div>
   <div class="kpis">
     <div class="kpi"><b>${base.length}</b><span>parlamentares</span></div>
