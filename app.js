@@ -78,21 +78,22 @@ function home(){
   <p class="nota" style="margin-top:20px">${esc(R.fonte)}</p>`;
 }
 
-const F = {q:"",uf:"",partido:"",situacao:"",eleicao:"",tema:""};
+const CASAS = ["Câmara dos Deputados","Senado Federal"];
+const F = {q:"",casa:"",uf:"",partido:"",situacao:"",tema:""};
 function lista(){
   view.innerHTML = `<h1>Parlamentares</h1><p class="lead">Perfis dos senadores. Busque por nome ou combine filtros. <b>Os perfis dos deputados ainda estão em produção.</b></p>
   <div class="filters">
     <input id="q" type="search" placeholder="Buscar por nome…" value="${esc(F.q)}">
-    ${sel("uf",D.map(p=>p.uf),"UF",F.uf)}${sel("partido",D.map(p=>p.partido),"Partido",F.partido)}${sel("situacao",PRONTOS.map(p=>p.situacao),"Situação",F.situacao)}${sel("eleicao",D.map(p=>p.eleicao),"Eleição",F.eleicao)}${sel("tema",PRONTOS.flatMap(p=>p.areas),"Tema",F.tema)}
+    ${sel("casa",CASAS,"Casa",F.casa)}${sel("uf",D.map(p=>p.uf),"UF",F.uf)}${sel("partido",D.map(p=>p.partido),"Partido",F.partido)}${sel("situacao",PRONTOS.map(p=>p.situacao),"Situação",F.situacao)}${sel("tema",PRONTOS.flatMap(p=>p.areas),"Tema",F.tema)}
     <button class="clear" id="clr" type="button">Limpar filtros</button>
   </div><div class="count" id="cnt"></div><div class="cards" id="cards"></div>`;
   const render = () => {
     const q = F.q.trim().toLowerCase();
-    const r = D.filter(p => (!q||p.nome.toLowerCase().includes(q)) && (!F.uf||p.uf===F.uf) && (!F.partido||p.partido===F.partido) && (!F.situacao||p.situacao===F.situacao) && (!F.eleicao||p.eleicao===F.eleicao) && (!F.tema||(p.areas||[]).includes(F.tema))).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
+    const r = D.filter(p => (!q||p.nome.toLowerCase().includes(q)) && (!F.casa||p.casa===F.casa) && (!F.uf||p.uf===F.uf) && (!F.partido||p.partido===F.partido) && (!F.situacao||p.situacao===F.situacao) && (!F.tema||(p.areas||[]).includes(F.tema))).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
     $("#clr").hidden = !Object.values(F).some(v => v);
     Object.keys(F).forEach(k => k!=="q" && $("#"+k).classList.toggle("ativo", !!F[k]));
     $("#cnt").textContent = `${r.length} parlamentar${r.length===1?"":"es"}`;
-    $("#cards").innerHTML = r.map(p => `<a class="pcard" href="#/parlamentar/${esc(p.id)}">${avatar(p)}<div><b>${esc(p.nome)}</b><small>${[p.partido,p.uf].filter(Boolean).map(esc).join("/")} · Senado</small>${selo(p)}</div></a>`).join("") || `<p class="lead">Nenhum resultado.</p>`;
+    $("#cards").innerHTML = r.map(p => `<a class="pcard" href="#/parlamentar/${esc(p.id)}">${avatar(p)}<div><b>${esc(p.nome)}</b><small>${[p.partido,p.uf].filter(Boolean).map(esc).join("/")} · Senado</small>${selo(p)}</div></a>`).join("") || `<p class="lead">${F.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum resultado."}</p>`;
   };
   Object.keys(F).forEach(k => { const el = $("#"+k); el.oninput = () => { F[k] = el.value; render(); }; });
   $("#clr").onclick = () => { Object.keys(F).forEach(k => F[k]=""); lista(); };
@@ -125,21 +126,21 @@ function ficha(id){
     ${relacionadas(p)}</div></div>`;
 }
 
-const S = {partido:"",uf:"",situacao:"",eleicao:"",tema:"",por:"uf",tipo:"barras"};
-const FILTROS = ["partido","uf","situacao","eleicao","tema"];
+const S = {casa:"",partido:"",uf:"",situacao:"",tema:"",por:"uf",tipo:"barras"};
+const FILTROS = ["casa","partido","uf","situacao","tema"];
 const DIMS = {uf:["Estado",p=>p.uf],partido:["Partido",p=>p.partido],situacao:["Situação",p=>p.situacao],tema:["Área temática",p=>p.areas],eleicao:["Eleição",p=>p.eleicao]};
 function estatisticas(){
-  const r = PRONTOS.filter(p => (!S.partido||p.partido===S.partido)&&(!S.uf||p.uf===S.uf)&&(!S.situacao||p.situacao===S.situacao)&&(!S.eleicao||p.eleicao===S.eleicao)&&(!S.tema||p.areas.includes(S.tema)));
+  const r = PRONTOS.filter(p => (!S.casa||p.casa===S.casa)&&(!S.partido||p.partido===S.partido)&&(!S.uf||p.uf===S.uf)&&(!S.situacao||p.situacao===S.situacao)&&(!S.tema||p.areas.includes(S.tema)));
   const dados = count(r, DIMS[S.por][1]);
   const ativos = FILTROS.some(k=>S[k]);
   view.innerHTML = `<h1>Estatísticas</h1><p class="lead">Escolha filtros e como dividir os resultados. Exemplo: filtre o PL e divida por Estado. Base: ${PRONTOS.length} senadores com perfil publicado.</p>
   <div class="dim"><b style="font-size:14px">Filtrar</b><div class="filters">
-    ${sel("s_partido",PRONTOS.map(p=>p.partido),"Partido",S.partido)}${sel("s_uf",PRONTOS.map(p=>p.uf),"UF",S.uf)}${sel("s_situacao",PRONTOS.map(p=>p.situacao),"Situação",S.situacao)}${sel("s_eleicao",PRONTOS.map(p=>p.eleicao),"Eleição",S.eleicao)}${sel("s_tema",PRONTOS.flatMap(p=>p.areas),"Tema",S.tema)}
+    ${sel("s_casa",CASAS,"Casa",S.casa)}${sel("s_partido",PRONTOS.map(p=>p.partido),"Partido",S.partido)}${sel("s_uf",PRONTOS.map(p=>p.uf),"UF",S.uf)}${sel("s_situacao",PRONTOS.map(p=>p.situacao),"Situação",S.situacao)}${sel("s_tema",PRONTOS.flatMap(p=>p.areas),"Tema",S.tema)}
     ${ativos?'<button class="clear" id="s_clr" type="button">Limpar filtros</button>':""}</div>
     <div class="filters"><label class="field">Dividir por<select id="s_por">${Object.entries(DIMS).map(([k,[n]])=>`<option value="${k}"${k===S.por?" selected":""}>${n}</option>`).join("")}</select></label>
     <label class="field">Gráfico<select id="s_tipo"><option value="barras"${S.tipo==="barras"?" selected":""}>Barras</option><option value="rosca"${S.tipo==="rosca"?" selected":""}>Rosca</option></select></label></div></div>
   <div class="kpis"><div class="kpi"><b>${r.length}</b><span>parlamentares no filtro</span></div><div class="kpi"><b>${Math.round(r.length/(PRONTOS.length||1)*100)}%</b><span>do total</span></div><div class="kpi"><b>${dados.length}</b><span>grupos em “${DIMS[S.por][0]}”</span></div></div>
-  <div class="card"><h3>Parlamentares por ${DIMS[S.por][0].toLowerCase()}</h3>${!r.length?'<p class="lead">Nenhum parlamentar com esses filtros.</p>':S.tipo==="rosca"?donut(dados.slice(0,8)):bars(dados.slice(0,20))}</div>`;
+  <div class="card"><h3>Parlamentares por ${DIMS[S.por][0].toLowerCase()}</h3>${!r.length?`<p class="lead">${S.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum parlamentar com esses filtros."}</p>`:S.tipo==="rosca"?donut(dados.slice(0,8)):bars(dados.slice(0,20))}</div>`;
   FILTROS.forEach(k => $("#s_"+k).onchange = e => { S[k]=e.target.value; estatisticas(); });
   ["por","tipo"].forEach(k => $("#s_"+k).onchange = e => { S[k]=e.target.value; estatisticas(); });
   const c = $("#s_clr"); if (c) c.onclick = () => { FILTROS.forEach(k=>S[k]=""); estatisticas(); };
