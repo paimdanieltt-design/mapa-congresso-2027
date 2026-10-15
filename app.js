@@ -121,7 +121,7 @@ function ficha(id){
     ${linha("Página oficial",p.pagina_oficial?link(p.pagina_oficial,"Senado Federal"):"")}
     ${linha("Redes",(p.redes||[]).map(r=>link(r.url,esc(r.rotulo))).filter(x=>x!=="—").join(" · "))}</dl>
     <h2>Minibiografia</h2>
-    ${p.minibio.split(/\n{2,}/).map(t=>`<p>${esc(t)}</p>`).join("")}
+    <div class="minibio">${p.minibio.split(/\n{2,}/).map(t=>`<p>${esc(t)}</p>`).join("")}</div>
     <h2>Fontes</h2><ul class="fontes">${(p.fontes||[]).map(f=>`<li>${link(f,esc(f))}</li>`).join("")}</ul>
     ${relacionadas(p)}</div></div>`;
 }

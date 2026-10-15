@@ -136,3 +136,5 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 .grid2 .donut{margin:auto 0;justify-content:center}
 @media(max-width:980px){.hemi{grid-template-columns:1fr;gap:20px}.pgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:560px){.pgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.bar{grid-template-columns:110px 1fr 30px}}
+
+.minibio p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
