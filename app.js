@@ -43,10 +43,33 @@ function hemiciclo(pairs, rotulo){
   seats.sort((s,t) => t.a - s.a || s.r - t.r);
   const gap = (Ro-Ri)/(rows-1), arco = Math.min(...radii.map((r,i) => Math.PI*r/(n[i]-1))), dot = 0.46*Math.min(gap, arco);
   let idx = 0;
-  const grupos = pairs.map(([k,v]) => { const cs = seats.slice(idx, idx+v).map(s => `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${dot.toFixed(2)}"/>`).join(""); idx += v; return `<g fill="${corP(k)}"><title>${esc(k)}: ${v}</title>${cs}</g>`; }).join("");
-  return `<svg class="hemi-svg" viewBox="0 0 220 120" role="img" aria-label="Hemiciclo: ${N} ${esc(rotulo)}">${grupos}<text x="110" y="97" text-anchor="middle" class="hemi-n">${N}</text><text x="110" y="110" text-anchor="middle" class="hemi-l">${esc(rotulo)}</text></svg>`;
+  const grupos = pairs.map(([k,v]) => { const cs = seats.slice(idx, idx+v).map(s => `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${dot.toFixed(2)}"/>`).join(""); idx += v; return `<g class="par" fill="${corP(k)}" data-p="${esc(k)}" data-n="${v}">${cs}</g>`; }).join("");
+  return `<svg class="hemi-svg" viewBox="0 0 220 120" data-total="${N}" role="img" aria-label="Hemiciclo: ${N} ${esc(rotulo)}">${grupos}<text x="110" y="97" text-anchor="middle" class="hemi-n">${N}</text><text x="110" y="110" text-anchor="middle" class="hemi-l">${esc(rotulo)}</text></svg>`;
 }
-const gridPartidos = pairs => `<div class="pgrid">${pairs.map(([k,v]) => `<div class="pcell" style="--c:${corP(k)}"><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>`;
+const gridPartidos = pairs => `<div class="pgrid">${pairs.map(([k,v]) => `<div class="pcell" style="--c:${corP(k)}" data-p="${esc(k)}" data-n="${v}"><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>`;
+const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; document.body.appendChild(tip);
+function ligarHover(){
+  document.querySelectorAll(".hemi").forEach(h => {
+    const svg = h.querySelector(".hemi-svg"); if (!svg) return;
+    const tot = +svg.dataset.total, grupos = [...svg.querySelectorAll(".par")], cels = [...h.querySelectorAll(".pcell")];
+    const alvo = ev => ev.target.closest(".par,.pcell");
+    const mover = ev => { tip.style.left = Math.max(8, Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 8)) + "px"; tip.style.top = (ev.clientY + 18) + "px"; };
+    const esconder = () => { svg.classList.remove("has-hover"); h.querySelectorAll(".on").forEach(x => x.classList.remove("on")); tip.hidden = true; };
+    const mostrar = (el, ev) => {
+      const p = el.dataset.p, n = +el.dataset.n;
+      svg.classList.add("has-hover");
+      grupos.forEach(g => g.classList.toggle("on", g.dataset.p === p));
+      cels.forEach(c => c.classList.toggle("on", c.dataset.p === p));
+      tip.innerHTML = `<i style="background:${corP(p)}"></i><b>${esc(p)}</b> · ${n} cadeira${n === 1 ? "" : "s"} (${Math.round(n / tot * 100)}%)`;
+      tip.hidden = false; mover(ev);
+    };
+    const tratar = ev => { const el = alvo(ev); if (el) mostrar(el, ev); else if (!ev.target.closest("svg")) esconder(); };
+    h.addEventListener("mouseover", tratar);
+    h.addEventListener("click", tratar); // toque no celular
+    h.addEventListener("mousemove", ev => { if (!tip.hidden) mover(ev); });
+    h.addEventListener("mouseleave", esconder);
+  });
+}
 const painelCasa = (pairs, rotulo) => `<div class="hemi">${hemiciclo(pairs, rotulo)}${gridPartidos(pairs)}</div>`;
 
 function home(){
@@ -76,6 +99,7 @@ function home(){
     <div class="card"><h3>Áreas temáticas</h3>${bars(count(PRONTOS,p=>p.areas).slice(0,8))}</div>
   </div>
   <p class="nota" style="margin-top:20px">${esc(R.fonte)}</p>`;
+  ligarHover();
 }
 
 const CASAS = ["Câmara dos Deputados","Senado Federal"];
@@ -198,6 +222,7 @@ function route(){
   const r = h[0] || "home";
   ({home, parlamentares:lista, parlamentar:()=>ficha(decodeURIComponent(h[1]||"")), sobre, estatisticas, noticias, analises:wip}[r] || home)();
   document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (r==="parlamentar"?"lista":r==="parlamentares"?"lista":r)));
+  tip.hidden = true;
   if(mob.matches) menu(false); window.scrollTo(0,0);
 }
 const mob = matchMedia("(max-width:860px)"), app = $(".app"), side = $("#side"), btn = $("#menuBtn");

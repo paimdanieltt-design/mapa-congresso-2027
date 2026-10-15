@@ -138,3 +138,11 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 @media(max-width:560px){.pgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.bar{grid-template-columns:110px 1fr 30px}}
 
 .minibio p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+
+/* hover nos hemiciclos */
+.par{transition:opacity .12s;cursor:pointer}
+.hemi-svg.has-hover .par:not(.on){opacity:.2}
+.pcell{cursor:pointer;transition:opacity .12s}
+.pcell.on b{color:var(--c)}
+.tip{position:fixed;z-index:60;pointer-events:none;background:#14192b;color:#fff;font-size:13px;line-height:1.3;padding:7px 12px;border-radius:8px;white-space:nowrap;box-shadow:0 6px 20px #0003}
+.tip i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:-1px;border:1px solid #fff6}
