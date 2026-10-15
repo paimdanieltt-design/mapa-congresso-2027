@@ -33,7 +33,7 @@ function donut(pairs){ const tot = pairs.reduce((a,p)=>a+p[1],0)||1; let acc = 0
 // Hemiciclo: cadeiras em arcos concêntricos, agrupadas por partido (da esquerda para a direita)
 function hemiciclo(pairs, rotulo){
   const N = pairs.reduce((a,p)=>a+p[1],0); if (!N) return "";
-  const rows = Math.max(2, Math.round(Math.sqrt(N/6))), Ri = 42, Ro = 100, cx = 110, cy = 108;
+  const rows = Math.max(2, Math.round(Math.sqrt(N/6))), Ri = 60, Ro = 104, cx = 110, cy = 110;
   const radii = Array.from({length:rows}, (_,i) => Ri + i*(Ro-Ri)/(rows-1));
   const soma = radii.reduce((a,b)=>a+b,0);
   const n = radii.map(r => Math.max(2, Math.round(N*r/soma)));
@@ -44,7 +44,7 @@ function hemiciclo(pairs, rotulo){
   const gap = (Ro-Ri)/(rows-1), arco = Math.min(...radii.map((r,i) => Math.PI*r/(n[i]-1))), dot = 0.46*Math.min(gap, arco);
   let idx = 0;
   const grupos = pairs.map(([k,v]) => { const cs = seats.slice(idx, idx+v).map(s => `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${dot.toFixed(2)}"/>`).join(""); idx += v; return `<g fill="${corP(k)}"><title>${esc(k)}: ${v}</title>${cs}</g>`; }).join("");
-  return `<svg class="hemi-svg" viewBox="0 0 220 118" role="img" aria-label="Hemiciclo: ${N} ${esc(rotulo)}">${grupos}<text x="110" y="92" text-anchor="middle" class="hemi-n">${N}</text><text x="110" y="106" text-anchor="middle" class="hemi-l">${esc(rotulo)}</text></svg>`;
+  return `<svg class="hemi-svg" viewBox="0 0 220 120" role="img" aria-label="Hemiciclo: ${N} ${esc(rotulo)}">${grupos}<text x="110" y="97" text-anchor="middle" class="hemi-n">${N}</text><text x="110" y="110" text-anchor="middle" class="hemi-l">${esc(rotulo)}</text></svg>`;
 }
 const gridPartidos = pairs => `<div class="pgrid">${pairs.map(([k,v]) => `<div class="pcell" style="--c:${corP(k)}"><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>`;
 const painelCasa = (pairs, rotulo) => `<div class="hemi">${hemiciclo(pairs, rotulo)}${gridPartidos(pairs)}</div>`;
