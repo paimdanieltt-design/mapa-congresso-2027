@@ -49,7 +49,6 @@ function hemiciclo(pairs, rotulo){
 const gridPartidos = pairs => `<div class="pgrid">${pairs.map(([k,v]) => `<div class="pcell" style="--c:${corP(k)}"><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>`;
 const painelCasa = (pairs, rotulo) => `<div class="hemi">${hemiciclo(pairs, rotulo)}${gridPartidos(pairs)}</div>`;
 
-let aba = "2026";
 function home(){
   const s26 = R.senado.partidos;
   const m = {}; s26.forEach(([k,v]) => m[k] = v);
@@ -67,9 +66,8 @@ function home(){
     <div class="kpi"><b>${PRONTOS.length}</b><span>perfis publicados</span></div>
   </div>
   <div class="card painel"><h2>Senado Federal</h2>
-    <div class="seg" id="seg"><button data-a="2026" class="${aba==="2026"?"on":""}">Eleitos em 2026 (${R.senado.eleitos})</button><button data-a="completa" class="${aba==="completa"?"on":""}">Bancada completa (${nCompleta})</button></div>
-    ${aba==="2026" ? painelCasa(s26,"eleitos") : painelCasa(completa,"senadores")}
-    <p class="nota">${aba==="2026" ? "Dois terços do Senado (54 cadeiras) foram renovados em 2026; mandato de 2027 a 2034." : "54 eleitos em 2026 + 27 senadores eleitos em 2022 (mandato até 2031)."}</p></div>
+    ${painelCasa(completa,"senadores")}
+    <p class="nota">Bancada completa: 54 eleitos em 2026 (mandato de 2027 a 2034) + 27 eleitos em 2022 (mandato até 2031).</p></div>
   <div class="card painel"><h2>Câmara dos Deputados</h2>${painelCasa(R.camara.partidos,"deputados")}
     <p class="nota">Perfis dos deputados em produção.</p></div>
   <h2>Senadores com perfil publicado</h2>
@@ -78,7 +76,6 @@ function home(){
     <div class="card"><h3>Áreas temáticas</h3>${bars(count(PRONTOS,p=>p.areas).slice(0,8))}</div>
   </div>
   <p class="nota" style="margin-top:20px">${esc(R.fonte)}</p>`;
-  $("#seg").onclick = e => { const a = e.target.dataset.a; if (a) { aba = a; home(); } };
 }
 
 const F = {q:"",uf:"",partido:"",situacao:"",eleicao:"",tema:""};
