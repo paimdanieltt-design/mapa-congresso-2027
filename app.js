@@ -109,17 +109,18 @@ function ficha(id){
   const link = (u,t) => safeUrl(u) ? `<a href="${esc(safeUrl(u))}" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">${t}</a>` : "—";
   const cab = `<a class="back" href="#/parlamentares">← Parlamentares</a>`;
   const foto = `<div class="foto">${p.foto?`<img src="${esc(p.foto)}" alt="Foto de ${esc(p.nome)}">`:"Sem foto"}</div>`;
-  const chips = `<div><span class="chip blue">${[p.partido,p.uf].filter(Boolean).map(esc).join("/")}</span><span class="chip">${esc(p.casa)}</span>${p.situacao?`<span class="chip">${esc(p.situacao)}</span>`:""}<span class="chip">${esc(p.eleicao)}</span> ${selo(p)}</div>`;
+  const chips = `<div><span class="chip blue">${[p.partido,p.uf].filter(Boolean).map(esc).join("/")}</span><span class="chip">${esc(p.casa)}</span>${p.situacao&&p.situacao!==p.eleicao?`<span class="chip">${esc(p.situacao)}</span>`:""}<span class="chip">${esc(p.eleicao)}</span> ${selo(p)}</div>`;
   if (!p.pronto) { view.innerHTML = `${cab}<div class="ficha">${foto}<div><h1>${esc(p.nome)}</h1>${chips}<p class="lead" style="margin-top:20px">O perfil deste parlamentar está em produção.</p></div></div>`; return; }
   const linha = (k,v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : "";
   view.innerHTML = `${cab}
   <div class="ficha">${foto}
   <div><h1>${esc(p.nome)}</h1>${chips}
-    ${p.minibio.split(/\n{2,}/).map(t=>`<p>${esc(t)}</p>`).join("")}
     <dl>${linha("Naturalidade",esc(p.naturalidade))}${linha("Formação",esc(p.formacao))}${linha("Ocupação",esc(p.ocupacao))}${linha("Cargos políticos",esc(p.cargos))}
     ${linha("Áreas temáticas",(p.areas||[]).map(a=>`<span class="chip blue">${esc(a)}</span>`).join(""))}
     ${linha("Página oficial",p.pagina_oficial?link(p.pagina_oficial,"Senado Federal"):"")}
     ${linha("Redes",(p.redes||[]).map(r=>link(r.url,esc(r.rotulo))).filter(x=>x!=="—").join(" · "))}</dl>
+    <h2>Minibiografia</h2>
+    ${p.minibio.split(/\n{2,}/).map(t=>`<p>${esc(t)}</p>`).join("")}
     <h2>Fontes</h2><ul class="fontes">${(p.fontes||[]).map(f=>`<li>${link(f,esc(f))}</li>`).join("")}</ul>
     ${relacionadas(p)}</div></div>`;
 }
