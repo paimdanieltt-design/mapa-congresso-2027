@@ -1,6 +1,6 @@
 // NOTÍCIAS FICTÍCIAS DE EXEMPLO – substituir pelas reais.
 // Para adicionar: use "+ Adicionar notícia" na aba Notícias, copie o código gerado e cole no fim da lista.
-// "parlamentares" = ids dos perfis citados (aparecem também na ficha do parlamentar).
+// "parlamentares" = identificadores dos perfis citados (ex.: "alessandro-vieira"); a notícia aparece na ficha deles. As notícias de exemplo abaixo não citam ninguém de propósito.
 window.NOTICIAS = [
   {
     "titulo": "Exemplo: bancada renovada chega ao Senado com maioria de novatos",
@@ -10,7 +10,7 @@ window.NOTICIAS = [
     "imagem": "",
     "resumo": "Resumo de exemplo (fictício) da reportagem, em uma ou duas frases.",
     "tags": ["Reforma política"],
-    "parlamentares": [1, 2]
+    "parlamentares": []
   },
   {
     "titulo": "Exemplo: quais temas dominam a agenda da próxima legislatura",
@@ -20,6 +20,6 @@ window.NOTICIAS = [
     "imagem": "",
     "resumo": "Segundo resumo de exemplo (fictício) para testar a prévia e os filtros.",
     "tags": ["Economia", "Saúde"],
-    "parlamentares": [3]
+    "parlamentares": []
   }
 ];

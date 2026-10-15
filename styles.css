@@ -58,12 +58,14 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 .av{flex:none;width:52px;height:52px;border-radius:50%;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-weight:700;overflow:hidden}
 .av img{width:100%;height:100%;object-fit:cover}
 .pcard b{display:block;line-height:1.25}
-.pcard small{color:var(--muted)}
+.pcard small{display:block;color:var(--muted)}
 .chip{display:inline-block;font-size:12px;border:1px solid var(--line);color:var(--muted);padding:2px 10px;border-radius:99px;margin:0 6px 6px 0}
 .chip.blue{background:var(--blue-soft);color:var(--blue);border-color:transparent}
 .ncard .go{color:var(--verde-forte)}
 .ficha{display:grid;grid-template-columns:200px 1fr;gap:32px}
-.ficha .foto{width:200px;height:240px;border-radius:16px;background:var(--surface);display:grid;place-items:center;color:var(--gray);font-size:13px}
+.ficha .foto{width:200px;height:250px;border-radius:16px;background:var(--surface);display:grid;place-items:center;color:var(--gray);font-size:13px;overflow:hidden}
+.ficha .foto img{width:100%;height:100%;object-fit:cover}
+.fontes{padding-left:18px;font-size:14px;word-break:break-all}
 .ficha dl{display:grid;grid-template-columns:150px 1fr;gap:8px 16px;margin:20px 0}
 .ficha dt{color:var(--muted);font-size:14px}.ficha dd{margin:0}
 .back{color:var(--muted);font-size:14px;display:inline-block;margin-bottom:18px}
@@ -107,3 +109,16 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
   .backdrop.on{display:block;position:fixed;inset:0;background:#0006;z-index:15}
   .ficha{grid-template-columns:1fr}.ficha dl{grid-template-columns:1fr}
 }
+
+.painel{margin-bottom:24px}
+.painel h2{margin:0 0 14px}
+.hemi{display:flex;gap:28px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.hemi-svg{width:min(100%,400px);height:auto;flex:none}
+.hemi-n{font:400 30px var(--display);fill:var(--text)}
+.hemi-l{font:400 8px Poppins,sans-serif;fill:var(--muted)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:14px 18px;flex:1;min-width:240px}
+.pcell{border-top:3px solid var(--c);padding-top:4px;font-size:12px;color:var(--muted)}
+.pcell b{display:block;font:400 30px/1.05 var(--display);color:var(--text)}
+.nota{font-size:12px;color:var(--muted);margin:16px 0 0}
+.badge{display:inline-block;font-size:11px;border-radius:99px;padding:1px 9px;background:#fff4d6;color:#8a5a00;border:1px solid #f0d890;margin-top:4px}
+.badge.cinza{background:var(--surface);color:var(--muted);border-color:var(--line)}
