@@ -168,3 +168,35 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 .texto-sobre p{margin:0 0 16px}
 
 .clear.inativo{opacity:.5}
+
+/* aba Processo legislativo */
+.texto-proc{max-width:72ch;margin:0 0 18px}
+.casas{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.casa-card{border:1px solid var(--line);border-top:5px solid var(--c);border-radius:14px;padding:20px}
+.casa-card h3{margin:0 0 10px;font-size:18px;color:var(--c)}
+.casa-card ul{margin:0;padding-left:18px;display:grid;gap:8px;font-size:15px}
+.passos{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.passo{display:grid;grid-template-columns:48px 1fr;gap:16px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.passo .n{width:44px;height:44px;border-radius:50%;background:var(--blue-soft);color:var(--blue);font:400 28px var(--display);display:grid;place-items:center}
+.passo h3{margin:2px 0 4px;font-size:16px}
+.passo p{margin:0;color:var(--muted);font-size:15px}
+.passo p b{color:var(--text)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+.tbl{width:100%;min-width:860px;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+.tbl thead th{background:var(--surface);font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.tbl tbody th{font-weight:600;white-space:nowrap}
+.tbl tr:last-child th,.tbl tr:last-child td{border-bottom:0}
+.quorum{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.q-card{background:var(--surface);border-radius:14px;padding:16px 18px}
+.q-card h3{margin:0 0 8px;font-size:15px}
+.q-nums{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.q-nums b{display:block;font:400 40px/1 var(--display);color:var(--blue)}
+.q-nums span:first-child b{color:var(--verde-forte)}
+.q-card p{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.lista-proc{max-width:72ch;padding-left:20px;display:grid;gap:8px}
+.glos{max-width:72ch}
+.glos details{border-bottom:1px solid var(--line);padding:12px 0}
+.glos summary{cursor:pointer;font-weight:600}
+.glos p{margin:8px 0 0;color:var(--muted)}
+@media(max-width:560px){.passo{grid-template-columns:40px 1fr;gap:12px;padding:14px}.passo .n{width:38px;height:38px;font-size:24px}}

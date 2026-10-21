@@ -326,12 +326,103 @@ const sobre = () => view.innerHTML = `<h1>Sobre e metodologia</h1>
   <h2>Metodologia</h2>
   <div class="card"><h3>Como um perfil chega ao site</h3><p>Cada perfil é produzido por uma pessoa do grupo, marcado como <b>Feito</b> e conferido por outra pessoa (<b>Revisão</b>). Perfis ainda não revisados aparecem com o selo “Em revisão”. Toda informação tem fonte linkada.</p></div>
   <h2>Equipe</h2><p class="lead">[a preencher]</p><h2>Contato</h2><p class="lead">[a preencher]</p>`;
+// ---------- Processo legislativo (conteúdo explicativo, baseado na Constituição Federal de 1988, arts. 44 a 69) ----------
+const N_SENADO = 81;
+const quorum = n => ({ absoluta: Math.floor(n/2) + 1, tresQuintos: Math.ceil(n*3/5), doisTercos: Math.ceil(n*2/3), umTerco: Math.ceil(n/3) });
+const PASSOS = [
+  ["Iniciativa", "Alguém apresenta o projeto. Podem propor: deputados e senadores (individualmente ou por comissão), o Presidente da República, o STF, os tribunais superiores, o Procurador-Geral da República e os cidadãos (iniciativa popular, com assinaturas de 1% do eleitorado nacional distribuídas em pelo menos cinco estados). Alguns temas só podem ser propostos pelo Presidente, como a criação de cargos no serviço público federal."],
+  ["Casa iniciadora", "Projetos do Presidente, do Judiciário e de iniciativa popular começam na Câmara dos Deputados. Os de deputados começam na Câmara e os de senadores, no Senado. A Casa onde o projeto começa é a <b>iniciadora</b>."],
+  ["Comissões", "O projeto vai para comissões temáticas (saúde, educação, economia etc.) e para a Comissão de Constituição e Justiça (CCJ), que confere se ele respeita a Constituição. Um <b>relator</b> escreve o parecer e as comissões podem propor emendas. Em alguns casos, as comissões decidem sozinhas (caráter conclusivo na Câmara; decisão terminativa no Senado), a menos que haja recurso para levar o tema ao plenário."],
+  ["Plenário", "Todos os parlamentares da Casa debatem e votam. O presidente da Casa, ouvidos os líderes dos partidos, define a <b>pauta</b>, ou seja, o que será votado e quando. A aprovação exige a maioria necessária para aquele tipo de norma (veja a tabela abaixo)."],
+  ["Casa revisora", "O projeto segue para a outra Casa, que repete o caminho (comissões e plenário). Se for aprovado sem mudanças, vai à sanção. Se for alterado, volta à Casa iniciadora, que decide se aceita ou não as mudanças e tem a palavra final sobre o texto. Se a Casa revisora rejeitar o projeto, ele é arquivado."],
+  ["Sanção ou veto", "O Presidente da República tem 15 dias úteis para <b>sancionar</b> (concordar) ou <b>vetar</b> (discordar), no todo ou em parte, por considerar o texto inconstitucional ou contrário ao interesse público. Se não responder no prazo, há sanção tácita."],
+  ["Análise do veto", "Se houve veto, deputados e senadores se reúnem em sessão conjunta e têm 30 dias para analisá-lo. Para derrubar o veto é preciso a maioria absoluta das duas Casas: __VETO__. Se o veto é mantido, vale a decisão do Presidente sobre aquele trecho."],
+  ["Promulgação e publicação", "A lei é promulgada e publicada no Diário Oficial da União. Só depois da publicação ela passa a valer."]
+];
+const TIPOS_NORMA = [
+  ["Emenda à Constituição (PEC)", "Altera o texto da Constituição (não pode abolir as cláusulas pétreas, como os direitos e garantias individuais).", "1/3 dos deputados ou dos senadores, Presidente da República ou mais da metade das Assembleias Legislativas.", "Dois turnos em cada Casa, com 3/5 dos votos: __TRES5__.", "Não. É promulgada pelas Mesas da Câmara e do Senado."],
+  ["Lei complementar", "Regulamenta temas que a Constituição manda tratar por esse tipo de lei (por exemplo, normas gerais de direito tributário).", "Deputados, senadores, Presidente, STF, tribunais superiores, PGR e iniciativa popular.", "Maioria absoluta em cada Casa: __ABS__.", "Sim."],
+  ["Lei ordinária", "É a regra geral para os temas do dia a dia: criar benefícios, definir crimes e penas, instituir programas.", "Mesmos autores da lei complementar.", "Maioria simples: a maioria dos presentes, desde que presente a maioria dos membros da Casa.", "Sim."],
+  ["Medida provisória (MP)", "Ato do Presidente, com força de lei, para casos de relevância e urgência.", "Presidente da República.", "Vale desde a edição por 60 dias, prorrogáveis por mais 60. Precisa ser aprovada pela Câmara e pelo Senado nesse prazo, senão perde a eficácia.", "Já nasce em vigor. Se o Congresso aprovar mudanças, o texto vai à sanção."],
+  ["Lei delegada", "Elaborada pelo Presidente, depois que o Congresso autoriza por resolução e define os limites.", "Presidente da República.", "O Congresso aprova a delegação por resolução.", "Não se aplica."],
+  ["Decreto legislativo", "Temas de competência exclusiva do Congresso, como aprovar tratados internacionais ou sustar atos do Executivo que extrapolem seus poderes.", "Deputados, senadores e comissões.", "Maioria simples, em regra.", "Não. É promulgado pelo Presidente do Congresso."],
+  ["Resolução", "Assuntos internos de cada Casa ou do Congresso, como regimentos e organização administrativa.", "Deputados, senadores e Mesas.", "Maioria simples, em regra.", "Não."]
+];
+const GLOSSARIO = [
+  ["Bancada e bloco", "Bancada é o conjunto de parlamentares de um mesmo partido, de um estado ou de um tema (como a bancada ruralista). Bloco é a união de partidos para atuar juntos na votação e na divisão de cargos."],
+  ["Comissão", "Grupo menor de parlamentares que analisa os projetos por tema antes do plenário. Podem ser permanentes (como a CCJ) ou temporárias (como as CPIs)."],
+  ["CPI (Comissão Parlamentar de Inquérito)", "Comissão temporária que investiga um fato determinado, por prazo certo. Para ser criada, precisa do pedido de 1/3 dos membros da Casa."],
+  ["Emenda", "Proposta de alteração em um projeto que já está em discussão. Pode acrescentar, retirar ou modificar trechos."],
+  ["Legislatura", "Período de quatro anos entre uma eleição e outra para o Congresso. A próxima, de 2027 a 2031, é a 58ª legislatura."],
+  ["Maioria absoluta e maioria simples", "Maioria absoluta é mais da metade de todos os membros da Casa, estejam presentes ou não. Maioria simples é mais da metade dos presentes na votação, desde que haja quórum para votar."],
+  ["Pauta", "A lista do que será discutido e votado. Quem decide é o presidente da Casa, em conversa com os líderes dos partidos."],
+  ["Plenário", "Reunião de todos os parlamentares de uma Casa, onde ocorrem os debates e as votações finais."],
+  ["Promulgação", "Ato que declara que a lei existe e deve ser cumprida. É seguida pela publicação no Diário Oficial."],
+  ["Quórum", "Número mínimo de parlamentares necessário para abrir uma sessão ou para aprovar determinada matéria."],
+  ["Relator", "Parlamentar escolhido para estudar um projeto e escrever o parecer que orienta a votação."],
+  ["Sanção e veto", "A sanção é a concordância do Presidente com o projeto aprovado pelo Congresso. O veto é a discordância, total ou parcial."],
+  ["Sessão legislativa", "Período anual de trabalho do Congresso: de 2 de fevereiro a 17 de julho e de 1º de agosto a 22 de dezembro."],
+  ["Urgência", "Regime que acelera a votação de um projeto. O Presidente pode pedir urgência para projetos seus: Câmara e Senado têm 45 dias cada, e depois disso a pauta da Casa fica trancada."]
+];
+
+const processo = () => {
+  const c = quorum(R.camara.total), s = quorum(N_SENADO);
+  const par = (k, ca, se) => `<b>${ca[k]} deputados e ${se[k]} senadores</b>`;
+  const sub = t => t.replace("__VETO__", par("absoluta", c, s)).replace("__TRES5__", par("tresQuintos", c, s)).replace("__ABS__", par("absoluta", c, s));
+  view.innerHTML = `<h1>Processo legislativo</h1>
+  <p class="lead">Como uma ideia vira lei no Brasil, quem decide em cada etapa e quantos votos são necessários. Um guia simples para acompanhar o trabalho de deputados e senadores.</p>
+
+  <h2>Como o Congresso é organizado</h2>
+  <p class="texto-proc">O Poder Legislativo federal é exercido pelo <b>Congresso Nacional</b>, formado por duas Casas que trabalham juntas: a Câmara dos Deputados e o Senado Federal. Elas têm três funções principais: <b>fazer leis</b> (inclusive mudar a Constituição), <b>fiscalizar o Executivo</b> e <b>representar a sociedade</b>.</p>
+  <div class="casas">
+    <div class="casa-card" style="--c:var(--verde-forte)"><h3>Câmara dos Deputados</h3>
+      <ul><li><b>${R.camara.total} deputados federais</b>, que representam o povo.</li><li>Mandato de <b>4 anos</b>; a eleição renova toda a Casa.</li><li>Eleitos pelo sistema <b>proporcional</b>: cada estado tem número de vagas proporcional à população (mínimo de 8 e máximo de 70).</li></ul></div>
+    <div class="casa-card" style="--c:var(--blue)"><h3>Senado Federal</h3>
+      <ul><li><b>${N_SENADO} senadores</b>, 3 por estado e 3 pelo Distrito Federal, que representam os estados.</li><li>Mandato de <b>8 anos</b>.</li><li>Eleição <b>majoritária</b>, com renovação alternada de 1/3 e de 2/3 das vagas a cada 4 anos. Em 2026, foram renovadas 54 vagas (2/3).</li></ul></div>
+  </div>
+
+  <h2>Do projeto à lei: passo a passo</h2>
+  <p class="texto-proc">Este é o caminho de um projeto de lei ordinária. Cada Casa tem seu regimento interno, mas a Constituição fixa as regras gerais.</p>
+  <ol class="passos">${PASSOS.map(([t,x],i) => `<li class="passo"><span class="n">${i+1}</span><div><h3>${t}</h3><p>${sub(x)}</p></div></li>`).join("")}</ol>
+
+  <h2>Que tipos de norma existem?</h2>
+  <p class="texto-proc">Nem tudo precisa dos mesmos votos. Quanto mais importante o tema, maior a maioria exigida.</p>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tipo</th><th>Para que serve</th><th>Quem pode propor</th><th>Como é votada</th><th>Vai à sanção?</th></tr></thead>
+    <tbody>${TIPOS_NORMA.map(l => `<tr>${l.map((x,i) => `<${i?"td":"th scope=\"row\""}>${sub(x)}</${i?"td":"th"}>`).join("")}</tr>`).join("")}</tbody></table></div>
+
+  <h2>Quórum em números</h2>
+  <p class="texto-proc">Com as ${R.camara.total} cadeiras da Câmara e as ${N_SENADO} do Senado, estes são os números que aparecem nas votações.</p>
+  <div class="quorum">${[
+    ["Maioria absoluta","absoluta","Leis complementares e derrubada de veto"],
+    ["Três quintos (3/5)","tresQuintos","Emendas à Constituição"],
+    ["Dois terços (2/3)","doisTercos","Abrir processo de impeachment (Câmara) e condenar (Senado)"],
+    ["Um terço (1/3)","umTerco","Criar uma CPI e propor emenda à Constituição"]
+  ].map(([t,k,u]) => `<div class="q-card"><h3>${t}</h3><div class="q-nums"><span><b>${c[k]}</b> deputados</span><span><b>${s[k]}</b> senadores</span></div><p>${u}</p></div>`).join("")}</div>
+
+  <h2>Além de fazer leis: fiscalização</h2>
+  <ul class="lista-proc">
+    <li><b>CPIs:</b> investigam fatos determinados e podem convocar pessoas para depor.</li>
+    <li><b>Convocação e pedidos de informação:</b> ministros e autoridades podem ser chamados a prestar esclarecimentos.</li>
+    <li><b>Controle de atos do Executivo:</b> o Congresso pode sustar, por decreto legislativo, atos que extrapolem o poder de regulamentar.</li>
+    <li><b>Contas públicas:</b> o Congresso julga as contas do Presidente da República, com o auxílio técnico do Tribunal de Contas da União (TCU), e aprova o orçamento federal.</li>
+    <li><b>Impeachment:</b> a Câmara autoriza a abertura do processo (2/3 dos deputados) e o Senado julga e pode condenar (2/3 dos senadores).</li>
+  </ul>
+
+  <h2>Glossário</h2>
+  <div class="glos">${GLOSSARIO.map(([t,x]) => `<details><summary>${t}</summary><p>${x}</p></details>`).join("")}</div>
+
+  <p class="nota" style="margin-top:28px">Conteúdo informativo e simplificado, com base na Constituição Federal de 1988 (arts. 44 a 69) e nos regimentos internos das duas Casas. Para o texto completo, consulte a
+  <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">Constituição Federal</a>, o site da
+  <a href="https://www.camara.leg.br/" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">Câmara dos Deputados</a> e o do
+  <a href="https://www.senado.leg.br/" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">Senado Federal</a>.</p>`;
+};
+
 const wip = () => view.innerHTML = `<h1>Análises</h1><p class="lead">Cruzamentos e recortes temáticos.</p><div class="wip">🚧 Em construção — volte em breve.</div>`;
 
 function route(){
   const h = location.hash.replace(/^#\/?/,"").split("/");
   const r = h[0] || "home";
-  ({home, parlamentares:lista, parlamentar:()=>ficha(decodeURIComponent(h[1]||"")), sobre, estatisticas, noticias, analises:wip}[r] || home)();
+  ({home, parlamentares:lista, parlamentar:()=>ficha(decodeURIComponent(h[1]||"")), sobre, estatisticas, noticias, processo, analises:wip}[r] || home)();
   document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (r==="parlamentar"?"lista":r==="parlamentares"?"lista":r)));
   tip.hidden = true;
   if(mob.matches) menu(false); window.scrollTo(0,0);
