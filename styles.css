@@ -220,3 +220,16 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 .com-topo{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%}
 .com-pres,.com-vice{display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:14px}
 .com-vice span{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* fotos e páginas de comissão */
+.av.pe{position:relative;width:52px;height:52px;font-size:15px;flex:none}
+.av.pe.xs{width:38px;height:38px;font-size:12px}
+.av.pe img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.org-linha{display:flex;align-items:center;gap:12px;min-width:0}
+.org-txt{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.vago{color:var(--muted);font-style:italic;font-weight:400}
+.com-nome{text-decoration:none!important}
+.com-nome:hover{text-decoration:underline!important}
+.com-ver{margin-top:auto;padding-top:6px;font-size:13px;font-weight:600;color:var(--blue)!important;text-decoration:none!important}
+.com-ver:hover{text-decoration:underline!important}
+.org-card.membro{padding:12px 14px}

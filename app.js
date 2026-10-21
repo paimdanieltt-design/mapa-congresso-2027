@@ -423,16 +423,24 @@ const normNome = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").t
 const INDICE_PERFIL = {}; TODOS.forEach(p => (INDICE_PERFIL[normNome(p.nome)] = INDICE_PERFIL[normNome(p.nome)] || []).push(p));
 // liga a pessoa ao perfil do site só quando o nome (e a UF) batem com um único parlamentar da mesma Casa
 const perfilDe = (pe, casa) => { const c = (INDICE_PERFIL[normNome(pe.nome)] || []).filter(p => p.casa === casa && (!pe.uf || !p.uf || p.uf === pe.uf)); return c.length === 1 ? c[0] : null; };
-const nomeLink = (pe, casa) => { const p = perfilDe(pe, casa); return p ? `<a href="#/parlamentar/${esc(p.id)}">${esc(pe.nome)}</a>` : esc(pe.nome); };
-const seloPe = pe => pe.partido || pe.uf ? `<span class="chip partido"${pe.partido ? ` style="--c:${corP(pe.partido)}"` : ""}>${[pe.partido, pe.uf].filter(Boolean).map(esc).join("/")}</span>` : "";
+const vago = pe => !pe || /^vago$/i.test((pe.nome || "").trim());
+const nomeLink = (pe, casa) => { if (vago(pe)) return `<span class="vago">Vaga em aberto</span>`; const p = perfilDe(pe, casa); return p ? `<a href="#/parlamentar/${esc(p.id)}">${esc(pe.nome)}</a>` : esc(pe.nome); };
+const seloPe = pe => !vago(pe) && (pe.partido || pe.uf) ? `<span class="chip partido"${pe.partido ? ` style="--c:${corP(pe.partido)}"` : ""}>${[pe.partido, pe.uf].filter(Boolean).map(esc).join("/")}</span>` : "";
+// foto: a do perfil do site, se houver; senão a foto oficial baixada pelo script; senão as iniciais
+const fotoPe = (pe, casa) => { const p = perfilDe(pe, casa); return (p && p.foto) || (pe.fid ? `assets/fotos-casas/${pe.fid}.jpg` : ""); };
+const avPe = (pe, casa, tam = "") => { const f = vago(pe) ? "" : fotoPe(pe, casa); return `<span class="av pe ${tam}"><span>${vago(pe) ? "?" : esc(ini(pe.nome))}</span>${f ? `<img src="${esc(f)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</span>`; };
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 const COMISSAO_BUSCA = {camara: "", senado: ""};
+const COM_ESTADO = {};
+const CASA_DE = {camara: "Câmara dos Deputados", senado: "Senado Federal"};
+const COR_CASA = {camara: "var(--verde-forte)", senado: "var(--blue)"};
+const linkComissao = (chave, sigla) => `#/comissao/${chave}/${encodeURIComponent(sigla)}`;
+const membrosTitulares = c => (c.membros || []).filter(m => m.tipo !== "Suplente");
 
 function casas(qual){
-  const chave = qual === "senado" ? "senado" : "camara", casa = chave === "senado" ? "Senado Federal" : "Câmara dos Deputados", d = ORG[chave];
-  const cor = chave === "senado" ? "var(--blue)" : "var(--verde-forte)";
-  const cardPessoa = (rotulo, pe) => `<div class="org-card"><small>${esc(rotulo)}</small><b>${pe ? nomeLink(pe, casa) : "—"}</b>${pe ? seloPe(pe) : ""}</div>`;
-  const cardLider = g => `<div class="org-card"><small>${esc(g.nome)}</small><b>${nomeLink(g.lider, casa)}</b>${seloPe(g.lider)}${g.vices ? `<em>${plural(g.vices, "vice-líder", "vice-líderes")}</em>` : ""}</div>`;
+  const chave = qual === "senado" ? "senado" : "camara", casa = CASA_DE[chave], d = ORG[chave], cor = COR_CASA[chave];
+  const cardPessoa = (rotulo, pe) => `<div class="org-card"><small>${esc(rotulo)}</small><div class="org-linha">${avPe(pe, casa)}<div class="org-txt"><b>${nomeLink(pe, casa)}</b>${seloPe(pe)}</div></div></div>`;
+  const cardLider = g => `<div class="org-card"><small>${esc(g.nome)}</small><div class="org-linha">${avPe(g.lider, casa)}<div class="org-txt"><b>${nomeLink(g.lider, casa)}</b>${seloPe(g.lider)}${g.vices ? `<em>${plural(g.vices, "vice-líder", "vice-líderes")}</em>` : ""}</div></div></div>`;
   const grade = (titulo, itens, ajuda) => itens.length ? `<h3 class="org-sub">${titulo}</h3>${ajuda ? `<p class="nota" style="margin:-6px 0 12px">${ajuda}</p>` : ""}<div class="org-grid">${itens.join("")}</div>` : "";
   const l = d.liderancas;
   view.innerHTML = `<h1>Câmara e Senado</h1>
@@ -451,7 +459,7 @@ function casas(qual){
   ${grade("Partidos", l.partidos.map(cardLider))}
 
   <h2>Comissões permanentes</h2>
-  <p class="texto-proc">Analisam os projetos por tema antes de irem ao plenário. Presidente e vice-presidentes são escolhidos pelos membros de cada comissão.</p>
+  <p class="texto-proc">Analisam os projetos por tema antes de irem ao plenário. Presidente e vice-presidentes são escolhidos pelos membros de cada comissão. Clique em uma comissão para ver todos os parlamentares que participam dela.</p>
   <div class="filters"><input id="busca-com" type="search" placeholder="Buscar comissão, sigla ou presidente…" value="${esc(COMISSAO_BUSCA[chave])}"></div>
   <div class="count" id="cnt-com"></div><div class="org-grid com-grid" id="lista-com"></div></div>
   <p class="nota" style="margin-top:28px">Fonte: ${chave === "senado" ? "Dados Abertos do Senado Federal (legis.senado.leg.br/dadosabertos)" : "Dados Abertos da Câmara dos Deputados (dadosabertos.camara.leg.br)"}. Nomes ligados a um perfil levam à ficha do parlamentar.</p>`;
@@ -459,28 +467,72 @@ function casas(qual){
     const q = normNome(COMISSAO_BUSCA[chave]);
     const r = d.comissoes.filter(c => !q || normNome(`${c.sigla} ${c.nome} ${c.presidente ? c.presidente.nome : ""}`).includes(q));
     $("#cnt-com").textContent = plural(r.length, "comissão", "comissões");
-    $("#lista-com").innerHTML = r.map(c => `<div class="org-card com"><div class="com-topo"><span class="chip">${esc(c.sigla)}</span><em>${plural(c.titulares, "titular", "titulares")} · ${plural(c.suplentes, "suplente", "suplentes")}</em></div>
-      <b>${esc(c.nome.replace(/^Comissão (de |do |da |dos |das )?/i, m => m).replace(/\s+/g, " "))}</b>
-      <div class="com-pres"><small>Presidente</small>${c.presidente ? `<span>${nomeLink(c.presidente, casa)}</span>${seloPe(c.presidente)}` : "<span>—</span>"}</div>
-      ${c.vices.length ? `<div class="com-vice"><small>${c.vices.length > 1 ? "Vice-presidentes" : "Vice-presidente"}</small>${c.vices.map(v => `<span>${nomeLink(v, casa)} ${seloPe(v)}</span>`).join("")}</div>` : ""}</div>`).join("") || `<p class="lead">Nenhuma comissão encontrada.</p>`;
+    $("#lista-com").innerHTML = r.map(c => { const nt = c.membros ? membrosTitulares(c).length : c.titulares, ns = c.membros ? c.membros.length - nt : c.suplentes;
+      return `<div class="org-card com"><div class="com-topo"><span class="chip">${esc(c.sigla)}</span><em>${plural(nt, "titular", "titulares")} · ${plural(ns, "suplente", "suplentes")}</em></div>
+      <b><a class="com-nome" href="${linkComissao(chave, c.sigla)}">${esc(c.nome)}</a></b>
+      <div class="com-pres"><small>Presidente</small>${c.presidente ? `<div class="org-linha">${avPe(c.presidente, casa, "xs")}<div class="org-txt"><span>${nomeLink(c.presidente, casa)}</span>${seloPe(c.presidente)}</div></div>` : "<span>—</span>"}</div>
+      ${c.vices.length ? `<div class="com-vice"><small>${c.vices.length > 1 ? "Vice-presidentes" : "Vice-presidente"}</small>${c.vices.map(v => `<span>${nomeLink(v, casa)} ${seloPe(v)}</span>`).join("")}</div>` : ""}
+      <a class="com-ver" href="${linkComissao(chave, c.sigla)}">Ver todos os membros →</a></div>`; }).join("") || `<p class="lead">Nenhuma comissão encontrada.</p>`;
   };
   desenhar();
   $("#busca-com").oninput = e => { COMISSAO_BUSCA[chave] = e.target.value; desenhar(); };
 }
 
+function comissao(qual, sigla){
+  const chave = qual === "senado" ? "senado" : "camara", casa = CASA_DE[chave], cor = COR_CASA[chave];
+  const c = ORG[chave].comissoes.find(x => x.sigla === sigla);
+  if (!c) { view.innerHTML = `${voltarPara()}<h1>Comissão não encontrada</h1>`; return; }
+  const membros = c.membros || [], direcao = membros.filter(m => m.tipo !== "Titular" && m.tipo !== "Suplente"), tit = membros.filter(m => m.tipo === "Titular"), sup = membros.filter(m => m.tipo === "Suplente");
+  const nTit = direcao.length + tit.length;
+  const E = COM_ESTADO[chave + "/" + sigla] = COM_ESTADO[chave + "/" + sigla] || {q: "", partido: ""};
+  const partidos = [...new Set(membros.map(m => m.partido).filter(Boolean))].sort((x, y) => x.localeCompare(y, "pt"));
+  const cardMembro = m => `<div class="org-card membro"><div class="org-linha">${avPe(m, casa)}<div class="org-txt"><b>${nomeLink(m, casa)}</b>${seloPe(m)}${m.tipo !== "Titular" && m.tipo !== "Suplente" ? `<em>${esc(m.tipo)}</em>` : ""}</div></div></div>`;
+  view.innerHTML = `${voltarPara()}
+  <div style="--c:${cor}">
+  <h1>${esc(c.nome)}</h1>
+  <div><span class="chip">${esc(c.sigla)}</span><span class="chip">${esc(casa)}</span><span class="chip">${plural(nTit, "membro titular", "membros titulares")}</span><span class="chip">${plural(sup.length, "suplente", "suplentes")}</span>${c.vagas ? `<span class="chip">${plural(c.vagas, "vaga em aberto", "vagas em aberto")}</span>` : ""}</div>
+  <p class="aviso-org">Composição atual, conforme os dados abertos oficiais de ${esc(ORG.geradoEm)}. Nomes ligados a um perfil levam à ficha do parlamentar.</p>
+  ${direcao.length ? `<h2>Direção</h2><div class="org-grid">${direcao.map(cardMembro).join("")}</div>` : ""}
+  <h2>Composição por partido</h2>
+  <div class="card" style="max-width:640px">${bars(count(membros.filter(m => m.tipo !== "Suplente"), m => m.partido), k => corP(k))}<p class="nota">Considera os membros titulares (incluindo a direção).</p></div>
+  <h2>Membros</h2>
+  <div class="filters"><input id="busca-mem" type="search" placeholder="Buscar parlamentar…" value="${esc(E.q)}">
+    <select id="par-mem" class="${E.partido ? "ativo" : ""}"><option value="">Partido</option>${partidos.map(p => `<option${p === E.partido ? " selected" : ""}>${esc(p)}</option>`).join("")}</select>
+    <button class="clear inativo" id="lim-mem" type="button">Limpar filtros</button></div>
+  <div id="membros-com"></div></div>`;
+  const desenhar = () => {
+    const q = normNome(E.q), ok = m => (!q || normNome(m.nome).includes(q)) && (!E.partido || m.partido === E.partido);
+    const bloco = (titulo, lista) => { const f = lista.filter(ok); return lista.length ? `<h3 class="org-sub">${titulo} (${f.length}${f.length !== lista.length ? " de " + lista.length : ""})</h3>${f.length ? `<div class="org-grid">${f.map(cardMembro).join("")}</div>` : `<p class="lead">Ninguém encontrado.</p>`}` : ""; };
+    $("#membros-com").innerHTML = bloco("Titulares", tit) + bloco("Suplentes", sup) || `<p class="lead">Esta comissão não tem membros listados.</p>`;
+    $("#lim-mem").classList.toggle("inativo", !E.q && !E.partido); $("#par-mem").classList.toggle("ativo", !!E.partido);
+  };
+  desenhar();
+  $("#busca-mem").oninput = e => { E.q = e.target.value; desenhar(); };
+  $("#par-mem").onchange = e => { E.partido = e.target.value; desenhar(); };
+  $("#lim-mem").onclick = () => { E.q = ""; E.partido = ""; $("#busca-mem").value = ""; $("#par-mem").value = ""; desenhar(); };
+}
+
 const wip = () => view.innerHTML = `<h1>Análises</h1><p class="lead">Cruzamentos e recortes temáticos.</p><div class="wip">🚧 Em construção — volte em breve.</div>`;
 
-let rotaAtual = location.hash || "#/", rotaOrigem = null; const rolagem = {};
+let rotaAtual = location.hash || "#/"; const origemDe = {}, rolagem = {};
+const ehDetalhe = r => /^#\/(parlamentar|comissao)\//.test(r);
 const ORIGENS = [["#/casas", "Câmara e Senado"], ["#/noticias", "Notícias"], ["#/estatisticas", "Estatísticas"], ["#/processo", "Processo legislativo"], ["#/parlamentares", "Parlamentares"], ["#/", "Panorama"]];
-const voltarPara = () => { const o = rotaOrigem || "#/parlamentares"; const [, rotulo] = ORIGENS.find(([p]) => o === p || o.startsWith(p + "/")) || ["", "Parlamentares"]; return `<a class="back" href="${esc(o)}">← ${esc(rotulo)}</a>`; };
+// botão "voltar" dos detalhes (perfil, comissão): leva à tela de onde a pessoa veio
+const voltarPara = () => {
+  const o = origemDe[rotaAtual] || (rotaAtual.startsWith("#/comissao/") ? `#/casas/${rotaAtual.split("/")[2]}` : "#/parlamentares");
+  let rotulo = (ORIGENS.find(([p]) => o === p || o.startsWith(p + "/")) || ["", "Parlamentares"])[1];
+  if (o.startsWith("#/comissao/")) { const [, , qual, sigla] = o.split("/"); const c = (ORG[qual] || {comissoes: []}).comissoes.find(x => x.sigla === decodeURIComponent(sigla || "")); rotulo = c ? `Comissão ${c.sigla}` : "Comissão"; }
+  return `<a class="back" href="${esc(o)}">← ${esc(rotulo)}</a>`;
+};
 function route(){
   const anterior = rotaAtual; rolagem[anterior] = window.scrollY; rotaAtual = location.hash || "#/";
-  if (rotaAtual.startsWith("#/parlamentar/") && !anterior.startsWith("#/parlamentar/")) rotaOrigem = anterior;
-  const voltandoDoPerfil = anterior.startsWith("#/parlamentar/") && rotaAtual === rotaOrigem;
+  if (rotaAtual.startsWith("#/parlamentar/") && !anterior.startsWith("#/parlamentar/")) origemDe[rotaAtual] = anterior;
+  else if (rotaAtual.startsWith("#/comissao/") && !ehDetalhe(anterior)) origemDe[rotaAtual] = anterior;
+  const voltandoDoPerfil = origemDe[anterior] === rotaAtual;
   const h = location.hash.replace(/^#\/?/,"").split("/");
   const r = h[0] || "home";
-  ({home, parlamentares:lista, parlamentar:()=>ficha(decodeURIComponent(h[1]||"")), sobre, estatisticas, noticias, processo, casas:()=>casas(h[1]), analises:wip}[r] || home)();
-  document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (r==="parlamentar"?"lista":r==="parlamentares"?"lista":r)));
+  ({home, parlamentares:lista, parlamentar:()=>ficha(decodeURIComponent(h[1]||"")), sobre, estatisticas, noticias, processo, casas:()=>casas(h[1]), comissao:()=>comissao(h[1], decodeURIComponent(h[2]||"")), analises:wip}[r] || home)();
+  document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (r==="parlamentar"?"lista":r==="parlamentares"?"lista":r==="comissao"?"casas":r)));
   tip.hidden = true;
   if(mob.matches) menu(false);
   window.scrollTo(0, voltandoDoPerfil ? (rolagem[rotaAtual] || 0) : 0); // ao voltar de um perfil, retoma o ponto da página onde a pessoa estava
