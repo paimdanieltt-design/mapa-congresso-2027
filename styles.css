@@ -163,3 +163,6 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 .chip.tema{background:hsl(var(--h) 65% 92%);color:hsl(var(--h) 62% 24%);border-color:transparent}
 .chip.partido{font-weight:600}
 .chip.partido[style]{background:color-mix(in srgb,var(--c) 30%,transparent);border-color:color-mix(in srgb,var(--c) 65%,transparent);color:color-mix(in srgb,var(--c) 50%,#14192b)}
+
+.texto-sobre{max-width:68ch}
+.texto-sobre p{margin:0 0 16px}

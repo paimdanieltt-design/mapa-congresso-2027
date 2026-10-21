@@ -311,7 +311,19 @@ function noticias(){
   $("#n_clr").onclick = () => { NF.q = NF.tag = NF.veiculo = ""; noticias(); };
 }
 
-const sobre = () => view.innerHTML = `<h1>Sobre e metodologia</h1><p class="lead">Espaço para explicar o objetivo do projeto, quem faz e como os perfis são produzidos.</p>
+const SOBRE_NOS = [
+  "Somos um grupo de estudantes de Ciência Política que acredita na importância do acesso à informação para o fortalecimento da participação política e da democracia.",
+  "A partir dessa convicção, desenvolvemos, por iniciativa própria, uma plataforma independente e gratuita com o objetivo de reunir, organizar e tornar acessíveis informações sobre os parlamentares que irão compor o Congresso Nacional a partir de 2027.",
+  "Nosso projeto reúne perfis de deputados federais e senadores, apresentando suas trajetórias pessoais e políticas, principais temas de interesse e áreas de atuação. Também disponibilizamos conteúdos explicativos sobre a política brasileira e o funcionamento de suas instituições.",
+  "A iniciativa nasceu da percepção de que informações sobre nossos representantes, embora estejam disponíveis em diferentes fontes, nem sempre são de fácil acesso ou consulta. Por isso, buscamos concentrá-las em um único espaço, de maneira clara, objetiva e organizada.",
+  "Queremos que a plataforma seja uma ferramenta de consulta tanto para cidadãos interessados em conhecer melhor seus representantes quanto para estudantes, pesquisadores, jornalistas, consultorias e profissionais que acompanham o Poder Legislativo.",
+  "Nosso compromisso é com a divulgação de informações de caráter apartidário, a partir de fontes públicas, contribuindo para aproximar a sociedade das instituições políticas brasileiras.",
+  "Acreditamos que conhecer quem nos representa é essencial para compreender, acompanhar e participar da política."
+];
+const sobre = () => view.innerHTML = `<h1>Sobre e metodologia</h1>
+  <h2>Sobre nós</h2>
+  <div class="texto-sobre">${SOBRE_NOS.map(t => `<p>${esc(t)}</p>`).join("")}</div>
+  <h2>Metodologia</h2>
   <div class="card"><h3>Como um perfil chega ao site</h3><p>Cada perfil é produzido por uma pessoa do grupo, marcado como <b>Feito</b> e conferido por outra pessoa (<b>Revisão</b>). Perfis ainda não revisados aparecem com o selo “Em revisão”. Toda informação tem fonte linkada.</p></div>
   <h2>Equipe</h2><p class="lead">[a preencher]</p><h2>Contato</h2><p class="lead">[a preencher]</p>`;
 const wip = () => view.innerHTML = `<h1>Análises</h1><p class="lead">Cruzamentos e recortes temáticos.</p><div class="wip">🚧 Em construção — volte em breve.</div>`;
