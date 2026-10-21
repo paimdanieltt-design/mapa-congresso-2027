@@ -32,7 +32,8 @@ LEGISLATURA = 57
 
 PARTIDOS = {"UNIAO": "União", "UNIAO BRASIL": "União", "REPUBLICANOS": "Republicanos", "PODE": "Podemos",
             "PODEMOS": "Podemos", "PCDOB": "PCdoB", "AVANTE": "Avante", "SOLIDARIEDADE": "Solidariedade",
-            "MISSAO": "Missão", "NOVO": "Novo", "REDE": "Rede", "SEM PARTIDO": "Sem partido"}
+            "MISSAO": "Missão", "NOVO": "Novo", "REDE": "Rede", "SEM PARTIDO": "Sem partido",
+            "REPUBLIC": "Republicanos", "SOLIDARI": "Solidariedade"}  # a API de membros da Câmara trunca estas siglas
 ORDEM_MESA_CAM = ["Presidente", "1º Vice-Presidente", "2º Vice-Presidente", "1º Secretário", "2º Secretário",
                   "3º Secretário", "4º Secretário", "1º Suplente de Secretário", "2º Suplente de Secretário",
                   "3º Suplente de Secretário", "4º Suplente de Secretário"]
