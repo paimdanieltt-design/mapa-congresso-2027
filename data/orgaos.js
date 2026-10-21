@@ -982,61 +982,61 @@ window.ORGAOS = {
     "uf": "AP"
    },
    {
-    "cargo": "1º vice-presidente",
+    "cargo": "1º Vice-Presidente",
     "nome": "Eduardo Gomes",
     "partido": "PL",
     "uf": "TO"
    },
    {
-    "cargo": "2º vice-presidente",
+    "cargo": "2º Vice-Presidente",
     "nome": "Humberto Costa",
     "partido": "PT",
     "uf": "PE"
    },
    {
-    "cargo": "1ª secretária",
+    "cargo": "1ª Secretária",
     "nome": "Daniella Ribeiro",
     "partido": "PP",
     "uf": "PB"
    },
    {
-    "cargo": "2º secretário",
+    "cargo": "2º Secretário",
     "nome": "Confúcio Moura",
     "partido": "MDB",
     "uf": "RO"
    },
    {
-    "cargo": "3ª secretária",
+    "cargo": "3ª Secretária",
     "nome": "Ana Paula Lobato",
     "partido": "PSB",
     "uf": "MA"
    },
    {
-    "cargo": "4º secretário",
+    "cargo": "4º Secretário",
     "nome": "Laércio Oliveira",
     "partido": "PP",
     "uf": "SE"
    },
    {
-    "cargo": "1º suplente",
+    "cargo": "1º Suplente",
     "nome": "Chico Rodrigues",
     "partido": "PSB",
     "uf": "RR"
    },
    {
-    "cargo": "2ª suplente",
+    "cargo": "2ª Suplente",
     "nome": "Roberta Acioly",
     "partido": "Republicanos",
     "uf": "RR"
    },
    {
-    "cargo": "3º suplente",
+    "cargo": "3º Suplente",
     "nome": "Styvenson Valentim",
     "partido": "Podemos",
     "uf": "RN"
    },
    {
-    "cargo": "4ª suplente",
+    "cargo": "4ª Suplente",
     "nome": "Soraya Thronicke",
     "partido": "PSB",
     "uf": "MS"
@@ -1045,11 +1045,11 @@ window.ORGAOS = {
   "liderancas": {
    "governo": [
     {
-     "nome": "Liderança da Bancada Feminina",
+     "nome": "Liderança do Governo",
      "lider": {
-      "nome": "Professora Dorinha Seabra",
-      "partido": "União",
-      "uf": "TO"
+      "nome": "Teresa Leitão",
+      "partido": "PT",
+      "uf": "PE"
      },
      "vices": 0
     },
@@ -1081,11 +1081,11 @@ window.ORGAOS = {
      "vices": 1
     },
     {
-     "nome": "Liderança do Governo",
+     "nome": "Liderança da Bancada Feminina",
      "lider": {
-      "nome": "Teresa Leitão",
-      "partido": "PT",
-      "uf": "PE"
+      "nome": "Professora Dorinha Seabra",
+      "partido": "União",
+      "uf": "TO"
      },
      "vices": 0
     }

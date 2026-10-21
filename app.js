@@ -236,9 +236,9 @@ function relacionadas(p){
 }
 function ficha(id){
   const p = D.find(x => x.id === id);
-  if (!p) { view.innerHTML = `<a class="back" href="#/parlamentares">← Voltar</a><h1>Perfil não encontrado</h1>`; return; }
+  if (!p) { view.innerHTML = `${voltarPara()}<h1>Perfil não encontrado</h1>`; return; }
   const link = (u,t) => safeUrl(u) ? `<a href="${esc(safeUrl(u))}" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">${t}</a>` : "—";
-  const cab = `<a class="back" href="#/parlamentares">← Parlamentares</a>`;
+  const cab = voltarPara();
   const foto = `<div class="foto">${p.foto?`<img src="${esc(p.foto)}" alt="Foto de ${esc(p.nome)}">`:"Sem foto"}</div>`;
   const chips = `<div>${p.partido||p.uf?`<span class="chip partido"${p.partido?` style="--c:${corP(p.partido)}"`:""}>${[p.partido,p.uf].filter(Boolean).map(esc).join("/")}</span>`:""}<span class="chip">${esc(p.casa)}</span>${p.situacao&&p.situacao!==p.eleicao?`<span class="chip">${esc(p.situacao)}</span>`:""}<span class="chip">${esc(p.eleicao)}</span> ${selo(p)}</div>`;
   if (!p.pronto) { view.innerHTML = `${cab}<div class="ficha">${foto}<div><h1>${esc(p.nome)}</h1>${chips}<p class="lead" style="margin-top:20px">O perfil deste parlamentar está em produção.</p>${relacionadas(p)}</div></div>`; return; }
@@ -470,13 +470,20 @@ function casas(qual){
 
 const wip = () => view.innerHTML = `<h1>Análises</h1><p class="lead">Cruzamentos e recortes temáticos.</p><div class="wip">🚧 Em construção — volte em breve.</div>`;
 
+let rotaAtual = location.hash || "#/", rotaOrigem = null; const rolagem = {};
+const ORIGENS = [["#/casas", "Câmara e Senado"], ["#/noticias", "Notícias"], ["#/estatisticas", "Estatísticas"], ["#/processo", "Processo legislativo"], ["#/parlamentares", "Parlamentares"], ["#/", "Panorama"]];
+const voltarPara = () => { const o = rotaOrigem || "#/parlamentares"; const [, rotulo] = ORIGENS.find(([p]) => o === p || o.startsWith(p + "/")) || ["", "Parlamentares"]; return `<a class="back" href="${esc(o)}">← ${esc(rotulo)}</a>`; };
 function route(){
+  const anterior = rotaAtual; rolagem[anterior] = window.scrollY; rotaAtual = location.hash || "#/";
+  if (rotaAtual.startsWith("#/parlamentar/") && !anterior.startsWith("#/parlamentar/")) rotaOrigem = anterior;
+  const voltandoDoPerfil = anterior.startsWith("#/parlamentar/") && rotaAtual === rotaOrigem;
   const h = location.hash.replace(/^#\/?/,"").split("/");
   const r = h[0] || "home";
   ({home, parlamentares:lista, parlamentar:()=>ficha(decodeURIComponent(h[1]||"")), sobre, estatisticas, noticias, processo, casas:()=>casas(h[1]), analises:wip}[r] || home)();
   document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (r==="parlamentar"?"lista":r==="parlamentares"?"lista":r)));
   tip.hidden = true;
-  if(mob.matches) menu(false); window.scrollTo(0,0);
+  if(mob.matches) menu(false);
+  window.scrollTo(0, voltandoDoPerfil ? (rolagem[rotaAtual] || 0) : 0); // ao voltar de um perfil, retoma o ponto da página onde a pessoa estava
 }
 const mob = matchMedia("(max-width:860px)"), app = $(".app"), side = $("#side"), btn = $("#menuBtn");
 const aberto = () => mob.matches ? side.classList.contains("open") : !app.classList.contains("collapsed");
