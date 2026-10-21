@@ -92,7 +92,7 @@ function home(){
     ${painelCasa(completa,"senadores")}
     <p class="nota">Bancada completa: 54 eleitos em 2026 (mandato de 2027 a 2034) + 27 eleitos em 2022 (mandato até 2031).</p></div>
   <div class="card painel"><h2>Câmara dos Deputados</h2>${painelCasa(R.camara.partidos,"deputados")}
-    <p class="nota">Perfis dos deputados em produção.</p></div>
+    <p class="nota">Os 513 eleitos já estão na lista de Parlamentares; os perfis dos deputados estão em produção.</p></div>
   <h2>Senadores com perfil publicado</h2>
   <div class="grid2">
     <div class="card"><h3>Renovação entre os eleitos em 2026</h3>${donut(count(novos,p=>p.situacao))}</div>
@@ -105,7 +105,7 @@ function home(){
 const CASAS = ["Câmara dos Deputados","Senado Federal"];
 const F = {q:"",casa:"",uf:"",partido:"",situacao:"",tema:""};
 function lista(){
-  view.innerHTML = `<h1>Parlamentares</h1><p class="lead">Perfis dos senadores. Busque por nome ou combine filtros. <b>Os perfis dos deputados ainda estão em produção.</b></p>
+  view.innerHTML = `<h1>Parlamentares</h1><p class="lead">Busque por nome ou combine filtros. Os perfis prontos aparecem primeiro. A lista já traz os <b>513 deputados eleitos</b>, mas os perfis deles ainda estão <b>em produção</b>.</p>
   <div class="filters">
     <input id="q" type="search" placeholder="Buscar por nome…" value="${esc(F.q)}">
     ${sel("casa",CASAS,"Casa",F.casa)}${sel("uf",D.map(p=>p.uf),"UF",F.uf)}${sel("partido",D.map(p=>p.partido),"Partido",F.partido)}${sel("situacao",PRONTOS.map(p=>p.situacao),"Situação",F.situacao)}${sel("tema",PRONTOS.flatMap(p=>p.areas),"Tema",F.tema)}
@@ -113,11 +113,11 @@ function lista(){
   </div><div class="count" id="cnt"></div><div class="cards" id="cards"></div>`;
   const render = () => {
     const q = F.q.trim().toLowerCase();
-    const r = D.filter(p => (!q||p.nome.toLowerCase().includes(q)) && (!F.casa||p.casa===F.casa) && (!F.uf||p.uf===F.uf) && (!F.partido||p.partido===F.partido) && (!F.situacao||p.situacao===F.situacao) && (!F.tema||(p.areas||[]).includes(F.tema))).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
+    const r = D.filter(p => (!q||p.nome.toLowerCase().includes(q)) && (!F.casa||p.casa===F.casa) && (!F.uf||p.uf===F.uf) && (!F.partido||p.partido===F.partido) && (!F.situacao||p.situacao===F.situacao) && (!F.tema||(p.areas||[]).includes(F.tema))).sort((a,b)=>(b.pronto-a.pronto)||a.nome.localeCompare(b.nome,"pt"));
     $("#clr").hidden = !Object.values(F).some(v => v);
     Object.keys(F).forEach(k => k!=="q" && $("#"+k).classList.toggle("ativo", !!F[k]));
     $("#cnt").textContent = `${r.length} parlamentar${r.length===1?"":"es"}`;
-    $("#cards").innerHTML = r.map(p => `<a class="pcard" href="#/parlamentar/${esc(p.id)}">${avatar(p)}<div><b>${esc(p.nome)}</b><small>${[p.partido,p.uf].filter(Boolean).map(esc).join("/")} · Senado</small>${selo(p)}</div></a>`).join("") || `<p class="lead">${F.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum resultado."}</p>`;
+    $("#cards").innerHTML = r.map(p => `<a class="pcard" href="#/parlamentar/${esc(p.id)}">${avatar(p)}<div><b>${esc(p.nome)}</b><small>${[p.partido,p.uf].filter(Boolean).map(esc).join("/")} · ${p.casa==="Senado Federal"?"Senado":"Câmara"}</small>${selo(p)}</div></a>`).join("") || `<p class="lead">${F.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum resultado."}</p>`;
   };
   Object.keys(F).forEach(k => { const el = $("#"+k); el.oninput = () => { F[k] = el.value; render(); }; });
   $("#clr").onclick = () => { Object.keys(F).forEach(k => F[k]=""); lista(); };
