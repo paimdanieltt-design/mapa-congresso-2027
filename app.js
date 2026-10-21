@@ -417,12 +417,63 @@ const processo = () => {
   <a href="https://www.senado.leg.br/" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">Senado Federal</a>.</p>`;
 };
 
+// ---------- Câmara e Senado: Mesa Diretora, lideranças e comissões (dados de data/orgaos.js, gerados pelas APIs oficiais) ----------
+const ORG = window.ORGAOS;
+const normNome = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+const INDICE_PERFIL = {}; TODOS.forEach(p => (INDICE_PERFIL[normNome(p.nome)] = INDICE_PERFIL[normNome(p.nome)] || []).push(p));
+// liga a pessoa ao perfil do site só quando o nome (e a UF) batem com um único parlamentar da mesma Casa
+const perfilDe = (pe, casa) => { const c = (INDICE_PERFIL[normNome(pe.nome)] || []).filter(p => p.casa === casa && (!pe.uf || !p.uf || p.uf === pe.uf)); return c.length === 1 ? c[0] : null; };
+const nomeLink = (pe, casa) => { const p = perfilDe(pe, casa); return p ? `<a href="#/parlamentar/${esc(p.id)}">${esc(pe.nome)}</a>` : esc(pe.nome); };
+const seloPe = pe => pe.partido || pe.uf ? `<span class="chip partido"${pe.partido ? ` style="--c:${corP(pe.partido)}"` : ""}>${[pe.partido, pe.uf].filter(Boolean).map(esc).join("/")}</span>` : "";
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+const COMISSAO_BUSCA = {camara: "", senado: ""};
+
+function casas(qual){
+  const chave = qual === "senado" ? "senado" : "camara", casa = chave === "senado" ? "Senado Federal" : "Câmara dos Deputados", d = ORG[chave];
+  const cor = chave === "senado" ? "var(--blue)" : "var(--verde-forte)";
+  const cardPessoa = (rotulo, pe) => `<div class="org-card"><small>${esc(rotulo)}</small><b>${pe ? nomeLink(pe, casa) : "—"}</b>${pe ? seloPe(pe) : ""}</div>`;
+  const cardLider = g => `<div class="org-card"><small>${esc(g.nome)}</small><b>${nomeLink(g.lider, casa)}</b>${seloPe(g.lider)}${g.vices ? `<em>${plural(g.vices, "vice-líder", "vice-líderes")}</em>` : ""}</div>`;
+  const grade = (titulo, itens, ajuda) => itens.length ? `<h3 class="org-sub">${titulo}</h3>${ajuda ? `<p class="nota" style="margin:-6px 0 12px">${ajuda}</p>` : ""}<div class="org-grid">${itens.join("")}</div>` : "";
+  const l = d.liderancas;
+  view.innerHTML = `<h1>Câmara e Senado</h1>
+  <p class="lead">Quem comanda cada Casa do Congresso: Mesa Diretora, lideranças e comissões permanentes.</p>
+  <div class="seg abas-casa"><a href="#/casas/camara" class="${chave === "camara" ? "on camara" : ""}">Câmara dos Deputados</a><a href="#/casas/senado" class="${chave === "senado" ? "on senado" : ""}">Senado Federal</a></div>
+  <p class="aviso-org"><b>Composição atual</b> (${esc(ORG.legislatura)}), conforme os dados abertos oficiais de ${esc(ORG.geradoEm)}. A Mesa Diretora, as lideranças e as presidências de comissões devem ser renovadas no início da próxima legislatura, em fevereiro de 2027.</p>
+  <div style="--c:${cor}">
+  <h2>Mesa Diretora</h2>
+  <p class="texto-proc">A Mesa dirige os trabalhos legislativos e a administração da Casa. É eleita pelos próprios parlamentares, para mandato de dois anos, e o presidente da Casa comanda as sessões.</p>
+  <div class="org-grid">${d.mesa.map(m => cardPessoa(m.cargo, m)).join("")}</div>
+
+  <h2>Lideranças</h2>
+  <p class="texto-proc">Os líderes falam em nome dos partidos, dos blocos e do governo e, reunidos, ajudam a definir a pauta de votações.</p>
+  ${grade(chave === "senado" ? "Governo, maioria, minoria e oposição" : "Governo", l.governo.map(cardLider))}
+  ${grade("Blocos e federações", l.blocos.map(cardLider), "Partidos que atuam juntos nas votações.")}
+  ${grade("Partidos", l.partidos.map(cardLider))}
+
+  <h2>Comissões permanentes</h2>
+  <p class="texto-proc">Analisam os projetos por tema antes de irem ao plenário. Presidente e vice-presidentes são escolhidos pelos membros de cada comissão.</p>
+  <div class="filters"><input id="busca-com" type="search" placeholder="Buscar comissão, sigla ou presidente…" value="${esc(COMISSAO_BUSCA[chave])}"></div>
+  <div class="count" id="cnt-com"></div><div class="org-grid com-grid" id="lista-com"></div></div>
+  <p class="nota" style="margin-top:28px">Fonte: ${chave === "senado" ? "Dados Abertos do Senado Federal (legis.senado.leg.br/dadosabertos)" : "Dados Abertos da Câmara dos Deputados (dadosabertos.camara.leg.br)"}. Nomes ligados a um perfil levam à ficha do parlamentar.</p>`;
+  const desenhar = () => {
+    const q = normNome(COMISSAO_BUSCA[chave]);
+    const r = d.comissoes.filter(c => !q || normNome(`${c.sigla} ${c.nome} ${c.presidente ? c.presidente.nome : ""}`).includes(q));
+    $("#cnt-com").textContent = plural(r.length, "comissão", "comissões");
+    $("#lista-com").innerHTML = r.map(c => `<div class="org-card com"><div class="com-topo"><span class="chip">${esc(c.sigla)}</span><em>${plural(c.titulares, "titular", "titulares")} · ${plural(c.suplentes, "suplente", "suplentes")}</em></div>
+      <b>${esc(c.nome.replace(/^Comissão (de |do |da |dos |das )?/i, m => m).replace(/\s+/g, " "))}</b>
+      <div class="com-pres"><small>Presidente</small>${c.presidente ? `<span>${nomeLink(c.presidente, casa)}</span>${seloPe(c.presidente)}` : "<span>—</span>"}</div>
+      ${c.vices.length ? `<div class="com-vice"><small>${c.vices.length > 1 ? "Vice-presidentes" : "Vice-presidente"}</small>${c.vices.map(v => `<span>${nomeLink(v, casa)} ${seloPe(v)}</span>`).join("")}</div>` : ""}</div>`).join("") || `<p class="lead">Nenhuma comissão encontrada.</p>`;
+  };
+  desenhar();
+  $("#busca-com").oninput = e => { COMISSAO_BUSCA[chave] = e.target.value; desenhar(); };
+}
+
 const wip = () => view.innerHTML = `<h1>Análises</h1><p class="lead">Cruzamentos e recortes temáticos.</p><div class="wip">🚧 Em construção — volte em breve.</div>`;
 
 function route(){
   const h = location.hash.replace(/^#\/?/,"").split("/");
   const r = h[0] || "home";
-  ({home, parlamentares:lista, parlamentar:()=>ficha(decodeURIComponent(h[1]||"")), sobre, estatisticas, noticias, processo, analises:wip}[r] || home)();
+  ({home, parlamentares:lista, parlamentar:()=>ficha(decodeURIComponent(h[1]||"")), sobre, estatisticas, noticias, processo, casas:()=>casas(h[1]), analises:wip}[r] || home)();
   document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (r==="parlamentar"?"lista":r==="parlamentares"?"lista":r)));
   tip.hidden = true;
   if(mob.matches) menu(false); window.scrollTo(0,0);
