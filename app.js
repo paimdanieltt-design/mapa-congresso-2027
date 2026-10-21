@@ -135,7 +135,7 @@ function ficha(id){
   const cab = `<a class="back" href="#/parlamentares">← Parlamentares</a>`;
   const foto = `<div class="foto">${p.foto?`<img src="${esc(p.foto)}" alt="Foto de ${esc(p.nome)}">`:"Sem foto"}</div>`;
   const chips = `<div><span class="chip blue">${[p.partido,p.uf].filter(Boolean).map(esc).join("/")}</span><span class="chip">${esc(p.casa)}</span>${p.situacao&&p.situacao!==p.eleicao?`<span class="chip">${esc(p.situacao)}</span>`:""}<span class="chip">${esc(p.eleicao)}</span> ${selo(p)}</div>`;
-  if (!p.pronto) { view.innerHTML = `${cab}<div class="ficha">${foto}<div><h1>${esc(p.nome)}</h1>${chips}<p class="lead" style="margin-top:20px">O perfil deste parlamentar está em produção.</p></div></div>`; return; }
+  if (!p.pronto) { view.innerHTML = `${cab}<div class="ficha">${foto}<div><h1>${esc(p.nome)}</h1>${chips}<p class="lead" style="margin-top:20px">O perfil deste parlamentar está em produção.</p>${relacionadas(p)}</div></div>`; return; }
   const linha = (k,v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : "";
   view.innerHTML = `${cab}
   <div class="ficha">${foto}

@@ -30,5 +30,35 @@ window.NOTICIAS = [
     "resumo": "Top 5 dos deputados mais votados tem 3 crentes: Nikolas Ferreira, Lucas Pavanato e André Fernandes.",
     "tags": ["Eleições 2026", "Câmara dos Deputados", "Religiosidade"],
     "parlamentares": []
+  },
+  {
+    "titulo": "MDB, PP, PSD e outros 7 partidos fecham apoio à reeleição de Motta",
+    "veiculo": "Poder360",
+    "data": "2026-10-14",
+    "url": "https://www.poder360.com.br/poder-congresso/mdb-pp-psd-e-outros-4-partidos-fecham-apoio-a-reeleicao-de-hugo-motta/",
+    "imagem": "https://static.poder360.com.br/uploads/2026/07/Hugo-Motta-Camara-14-jul-2026.jpg",
+    "resumo": "PT ainda não se posicionou, enquanto PL quer adiar discussão sobre o comando da Casa.",
+    "tags": ["Eleições 2026", "Câmara dos Deputados", "Presidência da Casa"],
+    "parlamentares": ["hugo"]
+  },
+  {
+    "titulo": "Alcolumbre conta com 6×1 e traições até no PL para se reeleger; Motta anuncia ‘blocão’",
+    "veiculo": "JOTA",
+    "data": "2026-10-15",
+    "url": "https://www.jota.info/legislativo/alcolumbre-conta-com-6x1-e-traicoes-ate-no-pl-para-se-reeleger-motta-anuncia-blocao",
+    "imagem": "https://images.jota.info/wp-content/uploads/2026/06/54567306321-b4140b4b28-k.jpg",
+    "resumo": "PL terá as maiores bancadas a partir de 2027 e busca presidências, mas os atuais presidentes do Legislativo buscam isolar bolsonarismo.",
+    "tags": ["Eleições 2026", "Senado Federal", "Presidência da Casa"],
+    "parlamentares": ["davi-alcolumbre", "hugo"]
+  },
+  {
+    "titulo": "Veja as possíveis lideranças do novo Congresso em 2027",
+    "veiculo": "Congresso em Foco",
+    "data": "2026-10-06",
+    "url": "https://www.congressoemfoco.com.br/noticia/123035/veja-as-possiveis-liderancas-do-novo-congresso-em-2027",
+    "imagem": "https://static.congressoemfoco.com.br/2026/10/06/cong_redes_retangular/2026/10/06/909b1e_cong_redes_retangular_manual_imagemdochatgpt6deoutde2026154831.png",
+    "resumo": "Levantamento reúne deputados e senadores que chegam à próxima legislatura com experiência de articulação, peso partidário, influência em bancadas ou capital político próprio.",
+    "tags": ["Eleições 2026", "Lideranças"],
+    "parlamentares": []
   }
 ];
