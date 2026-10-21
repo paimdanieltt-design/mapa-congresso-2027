@@ -144,3 +144,6 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 .donut.grande svg{width:min(100%,340px);height:auto;flex:none}
 .donut.grande .legend{font-size:15px;gap:11px}
 .donut.grande .legend i{width:12px;height:12px}
+
+.donut.grande .legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:9px 22px;flex:1;min-width:260px;font-size:14px}
+.donut.grande .legend div{white-space:nowrap}
