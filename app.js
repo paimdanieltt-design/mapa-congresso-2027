@@ -220,7 +220,7 @@ function lista(){
   const render = () => {
     const q = F.q.trim().toLowerCase();
     const r = D.filter(p => (!q||p.nome.toLowerCase().includes(q)) && (!F.casa||p.casa===F.casa) && (!F.uf||p.uf===F.uf) && (!F.partido||p.partido===F.partido) && (!F.situacao||p.situacao===F.situacao) && (!F.ocupacao||(p.ocupacoes||[]).includes(F.ocupacao)) && (!F.tema||(p.areas||[]).includes(F.tema))).sort((a,b)=>(b.pronto-a.pronto)||a.nome.localeCompare(b.nome,"pt"));
-    $("#clr").hidden = !Object.values(F).some(v => v);
+    $("#clr").classList.toggle("inativo", !Object.values(F).some(v => v));
     Object.keys(F).forEach(k => k!=="q" && $("#"+k).classList.toggle("ativo", !!F[k]));
     $("#cnt").textContent = `${r.length} parlamentar${r.length===1?"":"es"}`;
     $("#cards").innerHTML = r.map(p => `<a class="pcard ${p.casa==="Senado Federal"?"senado":"camara"}" href="#/parlamentar/${esc(p.id)}">${avatar(p)}<div><b>${esc(p.nome)}</b><small>${[p.partido,p.uf].filter(Boolean).map(esc).join("/")} · ${p.casa==="Senado Federal"?"Senado":"Câmara"}</small>${selo(p)}</div></a>`).join("") || `<p class="lead">${F.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum resultado."}</p>`;
@@ -267,7 +267,7 @@ function estatisticas(){
   view.innerHTML = `<h1>Estatísticas</h1><p class="lead">Escolha filtros e como dividir os resultados. Exemplo: filtre o PL e divida por Estado. Base: ${PRONTOS.length} senadores com perfil publicado.</p>
   <div class="dim"><b style="font-size:14px">Filtrar</b><div class="filters">
     ${sel("s_casa",CASAS,"Congresso Nacional",S.casa)}${sel("s_partido",PRONTOS.map(p=>p.partido),"Partido",S.partido)}${sel("s_uf",PRONTOS.map(p=>p.uf),"UF",S.uf)}${sel("s_situacao",PRONTOS.map(p=>p.situacao),"Situação",S.situacao)}${sel("s_ocupacao",PRONTOS.flatMap(p=>p.ocupacoes||[]),"Ocupação",S.ocupacao)}${sel("s_tema",PRONTOS.flatMap(p=>p.areas),"Tema",S.tema)}
-    ${ativos?'<button class="clear" id="s_clr" type="button">Limpar filtros</button>':""}</div>
+    <button class="clear${ativos?"":" inativo"}" id="s_clr" type="button">Limpar filtros</button></div>
     <div class="filters"><label class="field">Dividir por<select id="s_por">${Object.entries(DIMS).map(([k,[n]])=>`<option value="${k}"${k===S.por?" selected":""}>${n}</option>`).join("")}</select></label>
     <label class="field">Gráfico<select id="s_tipo"><option value="barras"${S.tipo==="barras"?" selected":""}>Barras</option><option value="rosca"${S.tipo==="rosca"?" selected":""}>Rosca</option></select></label></div></div>
   <div class="kpis"><div class="kpi"><b>${r.length}</b><span>parlamentares no filtro</span></div><div class="kpi"><b>${Math.round(r.length/(PRONTOS.length||1)*100)}%</b><span>do total</span></div><div class="kpi"><b>${dados.length}</b><span>grupos em “${DIMS[S.por][0]}”</span></div></div>

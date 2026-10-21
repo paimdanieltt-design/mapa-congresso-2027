@@ -126,35 +126,31 @@ def areas(v):
     return saida
 
 
-# categorias do filtro "Ocupação": (rótulo, trechos que, sem acento e em minúsculas, ativam a categoria)
-CATEGORIAS_OCUPACAO = [
-    ("Advogado", ("advog",)),
-    ("Médico", ("medic",)),
-    ("Outras áreas da saúde", ("enfermeir", "psicolog", "veterin")),
-    ("Empresário", ("empresar", "comerciante", "empreendedor")),
-    ("Engenheiro", ("engenheir",)),
-    ("Administrador", ("administrador",)),
-    ("Economista", ("economista",)),
-    ("Professor", ("professor",)),
-    ("Comunicação", ("jornalist", "publicit", "redator")),
-    ("Segurança e Forças Armadas", ("militar", "forcas armadas", "general", "tenente", "delegado", "policial")),
-    ("Agropecuária", ("agricult", "pecuar", "produtor", "agropecuar", "agronom")),
-    ("Servidor público", ("servidor", "empregado publico")),
-    ("Sindicalista", ("sindic",)),
-    ("Ciência e relações internacionais", ("cientista", "internacionalista")),
-    ("Político", ("politico",)),
-    ("Tecnologia", ("analista de sistemas", "computacao")),
-    ("Setor financeiro", ("bancario",)),
-    ("Esporte e cultura", ("atleta", "musico")),
-]
+# filtro "Ocupação": cada ocupação citada na planilha vira uma opção. Células com mais de uma
+# ocupação ("Advogada; Pecuarista", "Médico e Jornalista") são separadas, e o feminino vira masculino
+# ("Advogada" -> "Advogado") para a mesma ocupação não aparecer duas vezes.
+FEMININO = {"advogada": "advogado", "empresária": "empresário", "médica": "médico", "professora": "professor",
+            "enfermeira": "enfermeiro", "engenheira": "engenheiro", "psicóloga": "psicólogo",
+            "publicitária": "publicitário", "pedagoga": "pedagogo", "comerciante": "comerciante"}
 
 
-def categorias_ocupacao(v):
-    t = sem_acento(texto(v)).lower().replace("cientista politico", "cientista")
-    if not t:
-        return []
-    achadas = [rot for rot, trechos in CATEGORIAS_OCUPACAO if any(x in t for x in trechos)]
-    return achadas or ["Outras ocupações"]
+def lista_ocupacoes(v):
+    saida = []
+    t = re.sub(r"\s+e\s*\n\s*", " e ", texto(v))  # "Engenheiro e\nEmpreendedor"
+    for juntos in ("eletrônica e telecomunicações",):  # ocupações que contêm " e " e não devem ser separadas
+        t = t.replace(juntos, juntos.replace(" e ", "\u00a0e\u00a0"))
+    for parte in re.split(r"[;\n]| e ", t):
+        parte = parte.replace("\u00a0", " ")
+        parte = parte.strip(" .,")
+        if not parte:
+            continue
+        palavras = parte.split(" ")
+        palavras[0] = FEMININO.get(palavras[0].lower(), palavras[0])
+        parte = " ".join(palavras)
+        parte = parte[:1].upper() + parte[1:]
+        if parte.lower() not in [o.lower() for o in saida]:
+            saida.append(parte)
+    return saida
 
 
 def id_drive(u):
@@ -266,7 +262,7 @@ def ler_aba(ws, cols, casa, eleicao_padrao, vistos, manifesto, baixar):
                 "situacao": situacao(c(r, "situacao")), "naturalidade": texto(c(r, "naturalidade")),
                 "formacao": texto(c(r, "formacao")), "ocupacao": texto(c(r, "ocupacao")),
                 "cargos": texto(c(r, "cargos")), "areas": areas(c(r, "areas")),
-                "ocupacoes": categorias_ocupacao(c(r, "ocupacao")),
+                "ocupacoes": lista_ocupacoes(c(r, "ocupacao")),
                 "redes": [{"rotulo": rotulo_rede(u), "url": u} for u in urls(c(r, "redes"))],
                 "foto": f"assets/fotos/{pid}.jpg" if foto.exists() else "",
                 "minibio": re.sub(r"\n{3,}", "\n\n", texto(c(r, "minibio"))),

@@ -166,3 +166,5 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 
 .texto-sobre{max-width:68ch}
 .texto-sobre p{margin:0 0 16px}
+
+.clear.inativo{opacity:.5}
