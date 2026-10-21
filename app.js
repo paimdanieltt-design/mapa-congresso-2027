@@ -214,7 +214,7 @@ function lista(){
   view.innerHTML = `<h1>Parlamentares</h1><p class="lead">Busque por nome ou combine filtros. Os perfis prontos aparecem primeiro. A lista já traz os <b>513 deputados eleitos</b>, mas os perfis deles ainda estão <b>em produção</b>.</p>
   <div class="filters">
     <input id="q" type="search" placeholder="Buscar por nome…" value="${esc(F.q)}">
-    ${sel("casa",CASAS,"Casa",F.casa)}${sel("uf",D.map(p=>p.uf),"UF",F.uf)}${sel("partido",D.map(p=>p.partido),"Partido",F.partido)}${sel("situacao",PRONTOS.map(p=>p.situacao),"Situação",F.situacao)}${sel("ocupacao",PRONTOS.flatMap(p=>p.ocupacoes||[]),"Ocupação",F.ocupacao)}${sel("tema",PRONTOS.flatMap(p=>p.areas),"Tema",F.tema)}
+    ${sel("casa",CASAS,"Congresso Nacional",F.casa)}${sel("uf",D.map(p=>p.uf),"UF",F.uf)}${sel("partido",D.map(p=>p.partido),"Partido",F.partido)}${sel("situacao",PRONTOS.map(p=>p.situacao),"Situação",F.situacao)}${sel("ocupacao",PRONTOS.flatMap(p=>p.ocupacoes||[]),"Ocupação",F.ocupacao)}${sel("tema",PRONTOS.flatMap(p=>p.areas),"Tema",F.tema)}
     <button class="clear" id="clr" type="button">Limpar filtros</button>
   </div><div class="count" id="cnt"></div><div class="cards" id="cards"></div>`;
   const render = () => {
@@ -266,7 +266,7 @@ function estatisticas(){
   const ativos = FILTROS.some(k=>S[k]);
   view.innerHTML = `<h1>Estatísticas</h1><p class="lead">Escolha filtros e como dividir os resultados. Exemplo: filtre o PL e divida por Estado. Base: ${PRONTOS.length} senadores com perfil publicado.</p>
   <div class="dim"><b style="font-size:14px">Filtrar</b><div class="filters">
-    ${sel("s_casa",CASAS,"Casa",S.casa)}${sel("s_partido",PRONTOS.map(p=>p.partido),"Partido",S.partido)}${sel("s_uf",PRONTOS.map(p=>p.uf),"UF",S.uf)}${sel("s_situacao",PRONTOS.map(p=>p.situacao),"Situação",S.situacao)}${sel("s_ocupacao",PRONTOS.flatMap(p=>p.ocupacoes||[]),"Ocupação",S.ocupacao)}${sel("s_tema",PRONTOS.flatMap(p=>p.areas),"Tema",S.tema)}
+    ${sel("s_casa",CASAS,"Congresso Nacional",S.casa)}${sel("s_partido",PRONTOS.map(p=>p.partido),"Partido",S.partido)}${sel("s_uf",PRONTOS.map(p=>p.uf),"UF",S.uf)}${sel("s_situacao",PRONTOS.map(p=>p.situacao),"Situação",S.situacao)}${sel("s_ocupacao",PRONTOS.flatMap(p=>p.ocupacoes||[]),"Ocupação",S.ocupacao)}${sel("s_tema",PRONTOS.flatMap(p=>p.areas),"Tema",S.tema)}
     ${ativos?'<button class="clear" id="s_clr" type="button">Limpar filtros</button>':""}</div>
     <div class="filters"><label class="field">Dividir por<select id="s_por">${Object.entries(DIMS).map(([k,[n]])=>`<option value="${k}"${k===S.por?" selected":""}>${n}</option>`).join("")}</select></label>
     <label class="field">Gráfico<select id="s_tipo"><option value="barras"${S.tipo==="barras"?" selected":""}>Barras</option><option value="rosca"${S.tipo==="rosca"?" selected":""}>Rosca</option></select></label></div></div>
