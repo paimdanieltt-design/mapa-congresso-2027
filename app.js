@@ -103,17 +103,17 @@ function home(){
 }
 
 const CASAS = ["Câmara dos Deputados","Senado Federal"];
-const F = {q:"",casa:"",uf:"",partido:"",situacao:"",tema:""};
+const F = {q:"",casa:"",uf:"",partido:"",situacao:"",ocupacao:"",tema:""};
 function lista(){
   view.innerHTML = `<h1>Parlamentares</h1><p class="lead">Busque por nome ou combine filtros. Os perfis prontos aparecem primeiro. A lista já traz os <b>513 deputados eleitos</b>, mas os perfis deles ainda estão <b>em produção</b>.</p>
   <div class="filters">
     <input id="q" type="search" placeholder="Buscar por nome…" value="${esc(F.q)}">
-    ${sel("casa",CASAS,"Casa",F.casa)}${sel("uf",D.map(p=>p.uf),"UF",F.uf)}${sel("partido",D.map(p=>p.partido),"Partido",F.partido)}${sel("situacao",PRONTOS.map(p=>p.situacao),"Situação",F.situacao)}${sel("tema",PRONTOS.flatMap(p=>p.areas),"Tema",F.tema)}
+    ${sel("casa",CASAS,"Casa",F.casa)}${sel("uf",D.map(p=>p.uf),"UF",F.uf)}${sel("partido",D.map(p=>p.partido),"Partido",F.partido)}${sel("situacao",PRONTOS.map(p=>p.situacao),"Situação",F.situacao)}${sel("ocupacao",PRONTOS.flatMap(p=>p.ocupacoes||[]),"Ocupação",F.ocupacao)}${sel("tema",PRONTOS.flatMap(p=>p.areas),"Tema",F.tema)}
     <button class="clear" id="clr" type="button">Limpar filtros</button>
   </div><div class="count" id="cnt"></div><div class="cards" id="cards"></div>`;
   const render = () => {
     const q = F.q.trim().toLowerCase();
-    const r = D.filter(p => (!q||p.nome.toLowerCase().includes(q)) && (!F.casa||p.casa===F.casa) && (!F.uf||p.uf===F.uf) && (!F.partido||p.partido===F.partido) && (!F.situacao||p.situacao===F.situacao) && (!F.tema||(p.areas||[]).includes(F.tema))).sort((a,b)=>(b.pronto-a.pronto)||a.nome.localeCompare(b.nome,"pt"));
+    const r = D.filter(p => (!q||p.nome.toLowerCase().includes(q)) && (!F.casa||p.casa===F.casa) && (!F.uf||p.uf===F.uf) && (!F.partido||p.partido===F.partido) && (!F.situacao||p.situacao===F.situacao) && (!F.ocupacao||(p.ocupacoes||[]).includes(F.ocupacao)) && (!F.tema||(p.areas||[]).includes(F.tema))).sort((a,b)=>(b.pronto-a.pronto)||a.nome.localeCompare(b.nome,"pt"));
     $("#clr").hidden = !Object.values(F).some(v => v);
     Object.keys(F).forEach(k => k!=="q" && $("#"+k).classList.toggle("ativo", !!F[k]));
     $("#cnt").textContent = `${r.length} parlamentar${r.length===1?"":"es"}`;
@@ -150,16 +150,16 @@ function ficha(id){
     ${relacionadas(p)}</div></div>`;
 }
 
-const S = {casa:"",partido:"",uf:"",situacao:"",tema:"",por:"uf",tipo:"barras"};
-const FILTROS = ["casa","partido","uf","situacao","tema"];
-const DIMS = {uf:["Estado",p=>p.uf],partido:["Partido",p=>p.partido],situacao:["Situação",p=>p.situacao],tema:["Área temática",p=>p.areas],eleicao:["Eleição",p=>p.eleicao]};
+const S = {casa:"",partido:"",uf:"",situacao:"",ocupacao:"",tema:"",por:"uf",tipo:"barras"};
+const FILTROS = ["casa","partido","uf","situacao","ocupacao","tema"];
+const DIMS = {uf:["Estado",p=>p.uf],partido:["Partido",p=>p.partido],situacao:["Situação",p=>p.situacao],tema:["Área temática",p=>p.areas],ocupacao:["Ocupação",p=>p.ocupacoes],eleicao:["Eleição",p=>p.eleicao]};
 function estatisticas(){
-  const r = PRONTOS.filter(p => (!S.casa||p.casa===S.casa)&&(!S.partido||p.partido===S.partido)&&(!S.uf||p.uf===S.uf)&&(!S.situacao||p.situacao===S.situacao)&&(!S.tema||p.areas.includes(S.tema)));
+  const r = PRONTOS.filter(p => (!S.casa||p.casa===S.casa)&&(!S.partido||p.partido===S.partido)&&(!S.uf||p.uf===S.uf)&&(!S.situacao||p.situacao===S.situacao)&&(!S.ocupacao||(p.ocupacoes||[]).includes(S.ocupacao))&&(!S.tema||p.areas.includes(S.tema)));
   const dados = count(r, DIMS[S.por][1]);
   const ativos = FILTROS.some(k=>S[k]);
   view.innerHTML = `<h1>Estatísticas</h1><p class="lead">Escolha filtros e como dividir os resultados. Exemplo: filtre o PL e divida por Estado. Base: ${PRONTOS.length} senadores com perfil publicado.</p>
   <div class="dim"><b style="font-size:14px">Filtrar</b><div class="filters">
-    ${sel("s_casa",CASAS,"Casa",S.casa)}${sel("s_partido",PRONTOS.map(p=>p.partido),"Partido",S.partido)}${sel("s_uf",PRONTOS.map(p=>p.uf),"UF",S.uf)}${sel("s_situacao",PRONTOS.map(p=>p.situacao),"Situação",S.situacao)}${sel("s_tema",PRONTOS.flatMap(p=>p.areas),"Tema",S.tema)}
+    ${sel("s_casa",CASAS,"Casa",S.casa)}${sel("s_partido",PRONTOS.map(p=>p.partido),"Partido",S.partido)}${sel("s_uf",PRONTOS.map(p=>p.uf),"UF",S.uf)}${sel("s_situacao",PRONTOS.map(p=>p.situacao),"Situação",S.situacao)}${sel("s_ocupacao",PRONTOS.flatMap(p=>p.ocupacoes||[]),"Ocupação",S.ocupacao)}${sel("s_tema",PRONTOS.flatMap(p=>p.areas),"Tema",S.tema)}
     ${ativos?'<button class="clear" id="s_clr" type="button">Limpar filtros</button>':""}</div>
     <div class="filters"><label class="field">Dividir por<select id="s_por">${Object.entries(DIMS).map(([k,[n]])=>`<option value="${k}"${k===S.por?" selected":""}>${n}</option>`).join("")}</select></label>
     <label class="field">Gráfico<select id="s_tipo"><option value="barras"${S.tipo==="barras"?" selected":""}>Barras</option><option value="rosca"${S.tipo==="rosca"?" selected":""}>Rosca</option></select></label></div></div>

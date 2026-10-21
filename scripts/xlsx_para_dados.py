@@ -126,6 +126,37 @@ def areas(v):
     return saida
 
 
+# categorias do filtro "Ocupação": (rótulo, trechos que, sem acento e em minúsculas, ativam a categoria)
+CATEGORIAS_OCUPACAO = [
+    ("Advogado", ("advog",)),
+    ("Médico", ("medic",)),
+    ("Outras áreas da saúde", ("enfermeir", "psicolog", "veterin")),
+    ("Empresário", ("empresar", "comerciante", "empreendedor")),
+    ("Engenheiro", ("engenheir",)),
+    ("Administrador", ("administrador",)),
+    ("Economista", ("economista",)),
+    ("Professor", ("professor",)),
+    ("Comunicação", ("jornalist", "publicit", "redator")),
+    ("Segurança e Forças Armadas", ("militar", "forcas armadas", "general", "tenente", "delegado", "policial")),
+    ("Agropecuária", ("agricult", "pecuar", "produtor", "agropecuar", "agronom")),
+    ("Servidor público", ("servidor", "empregado publico")),
+    ("Sindicalista", ("sindic",)),
+    ("Ciência e relações internacionais", ("cientista", "internacionalista")),
+    ("Político", ("politico",)),
+    ("Tecnologia", ("analista de sistemas", "computacao")),
+    ("Setor financeiro", ("bancario",)),
+    ("Esporte e cultura", ("atleta", "musico")),
+]
+
+
+def categorias_ocupacao(v):
+    t = sem_acento(texto(v)).lower().replace("cientista politico", "cientista")
+    if not t:
+        return []
+    achadas = [rot for rot, trechos in CATEGORIAS_OCUPACAO if any(x in t for x in trechos)]
+    return achadas or ["Outras ocupações"]
+
+
 def id_drive(u):
     m = re.search(r"/d/([\w-]+)", u or "") or re.search(r"[?&]id=([\w-]+)", u or "")
     return m.group(1) if m else None
@@ -235,6 +266,7 @@ def ler_aba(ws, cols, casa, eleicao_padrao, vistos, manifesto, baixar):
                 "situacao": situacao(c(r, "situacao")), "naturalidade": texto(c(r, "naturalidade")),
                 "formacao": texto(c(r, "formacao")), "ocupacao": texto(c(r, "ocupacao")),
                 "cargos": texto(c(r, "cargos")), "areas": areas(c(r, "areas")),
+                "ocupacoes": categorias_ocupacao(c(r, "ocupacao")),
                 "redes": [{"rotulo": rotulo_rede(u), "url": u} for u in urls(c(r, "redes"))],
                 "foto": f"assets/fotos/{pid}.jpg" if foto.exists() else "",
                 "minibio": re.sub(r"\n{3,}", "\n\n", texto(c(r, "minibio"))),
