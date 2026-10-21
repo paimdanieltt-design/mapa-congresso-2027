@@ -90,14 +90,6 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 .ncard small{color:var(--muted)}
 .ncard p{margin:0;font-size:14px;color:var(--muted)}
 .ncard .go{margin-top:auto;color:var(--blue);font-size:14px;font-weight:600}
-.add{margin-top:32px;border:1px dashed var(--gray);border-radius:14px;padding:16px 20px}
-.add summary{cursor:pointer;font-weight:600}
-.add form{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:16px}
-.add label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
-.add input,.add textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 12px}
-.add .full{grid-column:1/-1}
-.add pre{background:var(--surface);border-radius:10px;padding:12px;overflow:auto;font-size:12px;white-space:pre-wrap;margin:0}
-.add .hint{font-size:13px;color:var(--muted);margin:8px 0 0}
 .field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
 .dim{background:var(--surface);border-radius:12px;padding:14px 16px;margin-top:18px}
 .dim .filters{margin:10px 0 0}

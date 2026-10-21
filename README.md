@@ -14,6 +14,6 @@ Site estático (HTML/CSS/JS puro, sem build) com o resultado das eleições de 2
   ```
   Só perfis com Status "Feito" exportam o conteúdo; os demais aparecem como "em produção". Responsável e Revisor não vão para o site.
   Fotos (links do Drive públicos) são baixadas para `assets/fotos/`. Links são limpos de rastreadores (utm, fbclid…).
-- `data/noticias.js`: notícias (editar à mão; a aba Notícias gera o código).
+- `data/noticias.js`: notícias (editar à mão: copie um bloco e preencha título, veículo, data, link, imagem, resumo e temas).
 - Em `app.js`, `SOMENTE_REVISADOS = true` publica apenas perfis com Revisão marcada; `false` publica todos os "Feito" e mostra o selo "Em revisão" nos não revisados.
 - Perfis de deputados: ainda não existem.

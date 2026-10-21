@@ -1,4 +1,4 @@
-// NOTÍCIAS. Para adicionar: use "+ Adicionar notícia" na aba Notícias, copie o código gerado e cole no fim da lista.
+// NOTÍCIAS. Para adicionar, copie um bloco abaixo e preencha os campos (a mais recente pode ir em qualquer posição; o site ordena por data).
 // "parlamentares" = identificadores dos perfis citados (ex.: "alessandro-vieira"); a notícia aparece na ficha deles.
 window.NOTICIAS = [
   {

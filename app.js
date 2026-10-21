@@ -183,17 +183,7 @@ function noticias(){
     <select id="n_tag" class="${NF.tag?"ativo":""}">${opts(N.flatMap(n=>n.tags||[]),"Tema",NF.tag)}</select>
     <select id="n_veiculo" class="${NF.veiculo?"ativo":""}">${opts(N.map(n=>n.veiculo),"Veículo",NF.veiculo)}</select>
     <button class="clear" id="n_clr" type="button" ${NF.q||NF.tag||NF.veiculo?"":"hidden"}>Limpar filtros</button></div>
-  <div class="count" id="n_cnt"></div><div class="news" id="n_list"></div>
-  <details class="add"><summary>+ Adicionar notícia</summary>
-    <p class="hint">Preencha os campos e copie o código gerado para o final da lista em <code>data/noticias.js</code>. (O site é estático, então a lista é editada no arquivo.) Para a imagem de prévia, use o link da imagem da reportagem (botão direito → copiar endereço da imagem).</p>
-    <form id="n_form" onsubmit="return false">
-      <label class="full">Título<input name="titulo"></label><label>Veículo<input name="veiculo" placeholder="Ex.: Folha, Nexo, Agência Senado"></label>
-      <label>Data<input name="data" type="date"></label><label class="full">Link da reportagem<input name="url" type="url" placeholder="https://…"></label>
-      <label class="full">Link da imagem de prévia (opcional)<input name="imagem" type="url"></label>
-      <label class="full">Resumo<textarea name="resumo" rows="2"></textarea></label>
-      <label>Temas (separados por vírgula)<input name="tags" placeholder="Economia, Saúde"></label>
-      <label>Parlamentares citados (opcional)<input name="parl" placeholder="alessandro-vieira, arthur-lira"></label>
-      <div class="full"><pre id="n_out"></pre><button class="clear" id="n_copy" type="button" style="margin-top:10px">Copiar código</button></div></form></details>`;
+  <div class="count" id="n_cnt"></div><div class="news" id="n_list"></div>`;
   const draw = () => {
     const q = NF.q.trim().toLowerCase();
     const r = N.filter(n => (!q||(n.titulo+" "+n.resumo).toLowerCase().includes(q)) && (!NF.tag||(n.tags||[]).includes(NF.tag)) && (!NF.veiculo||n.veiculo===NF.veiculo));
@@ -204,12 +194,6 @@ function noticias(){
   $("#n_q").oninput = e => { NF.q = e.target.value; draw(); };
   ["tag","veiculo"].forEach(k => $("#n_"+k).onchange = e => { NF[k] = e.target.value; noticias(); });
   $("#n_clr").onclick = () => { NF.q = NF.tag = NF.veiculo = ""; noticias(); };
-  const f = $("#n_form"), out = $("#n_out");
-  const gen = () => { const v = Object.fromEntries(new FormData(f));
-    const list = s => (s||"").split(",").map(x=>x.trim()).filter(Boolean);
-    out.textContent = "  " + JSON.stringify({titulo:v.titulo,veiculo:v.veiculo,data:v.data,url:v.url,imagem:v.imagem,resumo:v.resumo,tags:list(v.tags),parlamentares:list(v.parl)},null,2).replace(/\n/g,"\n  ") + ","; };
-  f.oninput = gen; gen();
-  $("#n_copy").onclick = async e => { try{ await navigator.clipboard.writeText(out.textContent); e.target.textContent = "Copiado!"; }catch(_){ e.target.textContent = "Selecione e copie manualmente"; } setTimeout(()=>e.target.textContent="Copiar código",1800); };
 }
 
 const sobre = () => view.innerHTML = `<h1>Sobre e metodologia</h1><p class="lead">Espaço para explicar o objetivo do projeto, quem faz e como os perfis são produzidos.</p>
