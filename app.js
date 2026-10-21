@@ -30,10 +30,6 @@ const TEMAS = [...new Set(TODOS.flatMap(p => p.areas || []))].sort((x,y) => x.lo
 const matizTema = k => Math.round((Math.max(0, TEMAS.indexOf(k)) * 137.508) % 360);
 const corTema = k => `hsl(${matizTema(k)} 62% 46%)`;
 const chipTema = k => `<span class="chip tema" style="--h:${matizTema(k)}">${esc(k)}</span>`;
-// texto branco ou escuro, o que tiver mais contraste sobre a cor do partido
-const luminancia = hex => { const m = /^#([0-9a-f]{6})$/i.exec(hex); if (!m) return 0; const [r,g,b] = [0,2,4].map(i => parseInt(m[1].substr(i,2),16)/255).map(v => v <= .03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4)); return .2126*r + .7152*g + .0722*b; };
-const textoSobre = hex => (1.05/(luminancia(hex)+.05)) >= ((luminancia(hex)+.05)/(luminancia("#14192b")+.05)) ? "#ffffff" : "#14192b";
-
 // cor da fatia i: paleta da marca nas 8 primeiras; depois tons distintos (ângulo áureo) para caber todos os grupos
 const corFatia = (k, i) => i < COR.length ? COR[i] : `hsl(${Math.round((i * 137.5) % 360)} 52% 48%)`;
 function donut(pairs, grande, corDe = corFatia){ const tot = pairs.reduce((a,p)=>a+p[1],0)||1; let acc = 0; const r=42, c=2*Math.PI*r;
@@ -244,7 +240,7 @@ function ficha(id){
   const link = (u,t) => safeUrl(u) ? `<a href="${esc(safeUrl(u))}" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">${t}</a>` : "—";
   const cab = `<a class="back" href="#/parlamentares">← Parlamentares</a>`;
   const foto = `<div class="foto">${p.foto?`<img src="${esc(p.foto)}" alt="Foto de ${esc(p.nome)}">`:"Sem foto"}</div>`;
-  const chips = `<div><span class="chip partido" style="${p.partido?`background:${corP(p.partido)};color:${textoSobre(corP(p.partido))};border-color:transparent`:""}">${[p.partido,p.uf].filter(Boolean).map(esc).join("/")}</span><span class="chip">${esc(p.casa)}</span>${p.situacao&&p.situacao!==p.eleicao?`<span class="chip">${esc(p.situacao)}</span>`:""}<span class="chip">${esc(p.eleicao)}</span> ${selo(p)}</div>`;
+  const chips = `<div>${p.partido||p.uf?`<span class="chip partido"${p.partido?` style="--c:${corP(p.partido)}"`:""}>${[p.partido,p.uf].filter(Boolean).map(esc).join("/")}</span>`:""}<span class="chip">${esc(p.casa)}</span>${p.situacao&&p.situacao!==p.eleicao?`<span class="chip">${esc(p.situacao)}</span>`:""}<span class="chip">${esc(p.eleicao)}</span> ${selo(p)}</div>`;
   if (!p.pronto) { view.innerHTML = `${cab}<div class="ficha">${foto}<div><h1>${esc(p.nome)}</h1>${chips}<p class="lead" style="margin-top:20px">O perfil deste parlamentar está em produção.</p>${relacionadas(p)}</div></div>`; return; }
   const linha = (k,v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : "";
   view.innerHTML = `${cab}
