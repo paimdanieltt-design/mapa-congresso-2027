@@ -22,8 +22,17 @@ const sel = (id, arr, ph, v) => `<select id="${id}" class="${v?"ativo":""}"><opt
 const avatar = p => `<div class="av">${p.foto ? `<img src="${esc(p.foto)}" alt="" loading="lazy">` : esc(ini(p.nome))}</div>`;
 const selo = p => !p.pronto ? `<span class="badge cinza">Em produção</span>` : !p.revisado ? `<span class="badge">Em revisão</span>` : "";
 
-function bars(pairs){ const max = Math.max(...pairs.map(p=>p[1]),1);
-  return pairs.map(([k,v]) => `<div class="bar"><span>${esc(k)}</span><i style="width:${v/max*100}%"></i><em>${v}</em></div>`).join(""); }
+function bars(pairs, corDe){ const max = Math.max(...pairs.map(p=>p[1]),1);
+  return pairs.map(([k,v],i) => `<div class="bar"><span>${esc(k)}</span><i style="width:${v/max*100}%${corDe?`;background:${corDe(k,i)}`:""}"></i><em>${v}</em></div>`).join(""); }
+
+// cor fixa por área temática (mesma cor em selos e gráficos): tons espaçados pelo ângulo áureo, na ordem alfabética das áreas
+const TEMAS = [...new Set(TODOS.flatMap(p => p.areas || []))].sort((x,y) => x.localeCompare(y,"pt"));
+const matizTema = k => Math.round((Math.max(0, TEMAS.indexOf(k)) * 137.508) % 360);
+const corTema = k => `hsl(${matizTema(k)} 62% 46%)`;
+const chipTema = k => `<span class="chip tema" style="--h:${matizTema(k)}">${esc(k)}</span>`;
+// texto branco ou escuro, o que tiver mais contraste sobre a cor do partido
+const luminancia = hex => { const m = /^#([0-9a-f]{6})$/i.exec(hex); if (!m) return 0; const [r,g,b] = [0,2,4].map(i => parseInt(m[1].substr(i,2),16)/255).map(v => v <= .03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4)); return .2126*r + .7152*g + .0722*b; };
+const textoSobre = hex => (1.05/(luminancia(hex)+.05)) >= ((luminancia(hex)+.05)/(luminancia("#14192b")+.05)) ? "#ffffff" : "#14192b";
 
 // cor da fatia i: paleta da marca nas 8 primeiras; depois tons distintos (ângulo áureo) para caber todos os grupos
 const corFatia = (k, i) => i < COR.length ? COR[i] : `hsl(${Math.round((i * 137.5) % 360)} 52% 48%)`;
@@ -110,13 +119,13 @@ function pintarPainel(ctx, pairs, rotulo, x, y, w){ // hemiciclo centralizado + 
   const hw = Math.min(1000, w), h1 = pintarHemi(ctx, pairs, rotulo, x + (w-hw)/2, y, hw);
   return h1 + 40 + pintarGrade(ctx, pairs, x, y + h1 + 40, w);
 }
-function pintarBarras(ctx, pairs, x, y, w){
+function pintarBarras(ctx, pairs, x, y, w, corDe){
   const lab = 330, val = 90, rowH = 54, barH = 26, max = Math.max(...pairs.map(p=>p[1]), 1), bw = w - lab - val;
   ctx.textBaseline = "middle";
   pairs.forEach(([k,v],i) => { const cy = y + i*rowH;
     ctx.fillStyle = "#14192b"; ctx.font = `26px ${FT}`; ctx.textAlign = "left"; ctx.fillText(cortar(ctx, k, lab - 20), x, cy + rowH/2);
     const gr = ctx.createLinearGradient(x + lab, 0, x + lab + bw, 0); gr.addColorStop(0, "#1f4fd8"); gr.addColorStop(1, "#5d85ed");
-    ctx.fillStyle = gr; rrect(ctx, x + lab, cy + (rowH-barH)/2, Math.max(12, bw*v/max), barH, barH/2); ctx.fill();
+    ctx.fillStyle = corDe ? corDe(k,i) : gr; rrect(ctx, x + lab, cy + (rowH-barH)/2, Math.max(12, bw*v/max), barH, barH/2); ctx.fill();
     ctx.fillStyle = "#5b6478"; ctx.textAlign = "right"; ctx.fillText(String(v), x + w, cy + rowH/2); });
   ctx.textBaseline = "alphabetic"; return pairs.length*rowH;
 }
@@ -192,7 +201,7 @@ function home(){
   <h2>Senadores com perfil publicado</h2>
   <div class="grid2">
     <div class="card"><div class="card-topo"><h3>Renovação entre os eleitos em 2026</h3>${btnDl("dl_renov")}</div>${donut(count(novos,p=>p.situacao))}</div>
-    <div class="card"><div class="card-topo"><h3>Áreas temáticas</h3>${btnDl("dl_areas")}</div>${bars(count(PRONTOS,p=>p.areas).slice(0,8))}</div>
+    <div class="card"><div class="card-topo"><h3>Áreas temáticas</h3>${btnDl("dl_areas")}</div>${bars(count(PRONTOS,p=>p.areas).slice(0,8), k => corTema(k))}</div>
   </div>
   <p class="nota" style="margin-top:20px">${esc(R.fonte)}</p>`;
   ligarHover();
@@ -200,7 +209,7 @@ function home(){
   $("#dl_senado").onclick = e => exportarPng(e.currentTarget, {titulo:"Senado Federal: bancada completa", subtitulo:`${nCompleta} senadores por partido · ${R.senado.eleitos} eleitos em 2026 (mandato de 2027 a 2034) + ${nCompleta - R.senado.eleitos} eleitos em 2022 (mandato até 2031)`, rodape:`Fonte: ${R.fonte}; senadores eleitos em 2022 conforme a planilha do projeto.`, pintar:(ctx,x,y,w) => pintarPainel(ctx, completa, "senadores", x, y, w)});
   $("#dl_camara").onclick = e => exportarPng(e.currentTarget, {titulo:"Câmara dos Deputados: composição eleita em 2026", subtitulo:`${R.camara.total} deputados federais por partido`, rodape:`Fonte: ${R.fonte}`, pintar:(ctx,x,y,w) => pintarPainel(ctx, R.camara.partidos, "deputados", x, y, w)});
   $("#dl_renov").onclick = e => exportarPng(e.currentTarget, {titulo:"Renovação entre os senadores eleitos em 2026", subtitulo:`${novos.length} senadores eleitos em 2026 com perfil publicado, por situação`, rodape:"Fonte: planilha de perfis do projeto (senadores com perfil pronto).", pintar:(ctx,x,y,w) => pintarRosca(ctx, renov, corFatia, x, y, w)});
-  $("#dl_areas").onclick = e => exportarPng(e.currentTarget, {titulo:"Áreas temáticas dos senadores", subtitulo:`As 8 áreas mais frequentes entre os ${PRONTOS.length} senadores com perfil publicado (um senador pode ter mais de uma área)`, rodape:"Fonte: planilha de perfis do projeto (senadores com perfil pronto).", pintar:(ctx,x,y,w) => pintarBarras(ctx, areasTop, x, y, w)});
+  $("#dl_areas").onclick = e => exportarPng(e.currentTarget, {titulo:"Áreas temáticas dos senadores", subtitulo:`As 8 áreas mais frequentes entre os ${PRONTOS.length} senadores com perfil publicado (um senador pode ter mais de uma área)`, rodape:"Fonte: planilha de perfis do projeto (senadores com perfil pronto).", pintar:(ctx,x,y,w) => pintarBarras(ctx, areasTop, x, y, w, k => corTema(k))});
 }
 
 const CASAS = ["Câmara dos Deputados","Senado Federal"];
@@ -235,14 +244,14 @@ function ficha(id){
   const link = (u,t) => safeUrl(u) ? `<a href="${esc(safeUrl(u))}" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">${t}</a>` : "—";
   const cab = `<a class="back" href="#/parlamentares">← Parlamentares</a>`;
   const foto = `<div class="foto">${p.foto?`<img src="${esc(p.foto)}" alt="Foto de ${esc(p.nome)}">`:"Sem foto"}</div>`;
-  const chips = `<div><span class="chip blue">${[p.partido,p.uf].filter(Boolean).map(esc).join("/")}</span><span class="chip">${esc(p.casa)}</span>${p.situacao&&p.situacao!==p.eleicao?`<span class="chip">${esc(p.situacao)}</span>`:""}<span class="chip">${esc(p.eleicao)}</span> ${selo(p)}</div>`;
+  const chips = `<div><span class="chip partido" style="${p.partido?`background:${corP(p.partido)};color:${textoSobre(corP(p.partido))};border-color:transparent`:""}">${[p.partido,p.uf].filter(Boolean).map(esc).join("/")}</span><span class="chip">${esc(p.casa)}</span>${p.situacao&&p.situacao!==p.eleicao?`<span class="chip">${esc(p.situacao)}</span>`:""}<span class="chip">${esc(p.eleicao)}</span> ${selo(p)}</div>`;
   if (!p.pronto) { view.innerHTML = `${cab}<div class="ficha">${foto}<div><h1>${esc(p.nome)}</h1>${chips}<p class="lead" style="margin-top:20px">O perfil deste parlamentar está em produção.</p>${relacionadas(p)}</div></div>`; return; }
   const linha = (k,v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : "";
   view.innerHTML = `${cab}
   <div class="ficha">${foto}
   <div><h1>${esc(p.nome)}</h1>${chips}
     <dl>${linha("Naturalidade",esc(p.naturalidade))}${linha("Formação",esc(p.formacao))}${linha("Ocupação",esc(p.ocupacao))}${linha("Cargos políticos",esc(p.cargos))}
-    ${linha("Áreas temáticas",(p.areas||[]).map(a=>`<span class="chip blue">${esc(a)}</span>`).join(""))}
+    ${linha("Áreas temáticas",(p.areas||[]).map(chipTema).join(""))}
     ${linha("Página oficial",p.pagina_oficial?link(p.pagina_oficial,"Senado Federal"):"")}
     ${linha("Redes",(p.redes||[]).map(r=>link(r.url,esc(r.rotulo))).filter(x=>x!=="—").join(" · "))}</dl>
     <h2>Minibiografia</h2>
@@ -253,6 +262,7 @@ function ficha(id){
 
 const S = {casa:"",partido:"",uf:"",situacao:"",ocupacao:"",tema:"",por:"partido",tipo:"barras"};
 const FILTROS = ["casa","partido","uf","situacao","ocupacao","tema"];
+const corDim = por => por === "partido" ? (k => corP(k)) : por === "tema" ? (k => corTema(k)) : null;
 const DIMS = {uf:["Estado",p=>p.uf],partido:["Partido",p=>p.partido],situacao:["Situação",p=>p.situacao],tema:["Área temática",p=>p.areas],ocupacao:["Ocupação",p=>p.ocupacoes],eleicao:["Eleição",p=>p.eleicao]};
 function estatisticas(){
   const r = PRONTOS.filter(p => (!S.casa||p.casa===S.casa)&&(!S.partido||p.partido===S.partido)&&(!S.uf||p.uf===S.uf)&&(!S.situacao||p.situacao===S.situacao)&&(!S.ocupacao||(p.ocupacoes||[]).includes(S.ocupacao))&&(!S.tema||p.areas.includes(S.tema)));
@@ -265,14 +275,14 @@ function estatisticas(){
     <div class="filters"><label class="field">Dividir por<select id="s_por">${Object.entries(DIMS).map(([k,[n]])=>`<option value="${k}"${k===S.por?" selected":""}>${n}</option>`).join("")}</select></label>
     <label class="field">Gráfico<select id="s_tipo"><option value="barras"${S.tipo==="barras"?" selected":""}>Barras</option><option value="rosca"${S.tipo==="rosca"?" selected":""}>Rosca</option></select></label></div></div>
   <div class="kpis"><div class="kpi"><b>${r.length}</b><span>parlamentares no filtro</span></div><div class="kpi"><b>${Math.round(r.length/(PRONTOS.length||1)*100)}%</b><span>do total</span></div><div class="kpi"><b>${dados.length}</b><span>grupos em “${DIMS[S.por][0]}”</span></div></div>
-  <div class="card"><div class="card-topo"><h3>Parlamentares por ${DIMS[S.por][0].toLowerCase()}</h3>${r.length ? btnDl("dl_stats") : ""}</div>${!r.length?`<p class="lead">${S.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum parlamentar com esses filtros."}</p>`:S.tipo==="rosca"?donut(dados,true,S.por==="partido"?(k=>corP(k)):corFatia):bars(dados.slice(0,20))}</div>`;
+  <div class="card"><div class="card-topo"><h3>Parlamentares por ${DIMS[S.por][0].toLowerCase()}</h3>${r.length ? btnDl("dl_stats") : ""}</div>${!r.length?`<p class="lead">${S.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum parlamentar com esses filtros."}</p>`:S.tipo==="rosca"?donut(dados,true,corDim(S.por)||corFatia):bars(dados.slice(0,20),corDim(S.por))}</div>`;
   const btn = $("#dl_stats");
   if (btn) btn.onclick = e => {
     const ROT = {casa:"Casa", partido:"Partido", uf:"UF", situacao:"Situação", ocupacao:"Ocupação", tema:"Tema"};
     const filtros = FILTROS.filter(k => S[k]).map(k => `${ROT[k]}: ${S[k]}`).join(" · ") || "sem filtros";
     exportarPng(e.currentTarget, {titulo:`Parlamentares por ${DIMS[S.por][0].toLowerCase()}`, subtitulo:`${r.length} parlamentares (${filtros})`,
       rodape:`Fonte: planilha de perfis do projeto (${PRONTOS.length} senadores com perfil publicado).`,
-      pintar:(ctx,x,y,w) => S.tipo === "rosca" ? pintarRosca(ctx, dados, S.por === "partido" ? (k => corP(k)) : corFatia, x, y, w) : pintarBarras(ctx, dados.slice(0,20), x, y, w)});
+      pintar:(ctx,x,y,w) => S.tipo === "rosca" ? pintarRosca(ctx, dados, corDim(S.por) || corFatia, x, y, w) : pintarBarras(ctx, dados.slice(0,20), x, y, w, corDim(S.por))});
   };
   FILTROS.forEach(k => $("#s_"+k).onchange = e => { S[k]=e.target.value; estatisticas(); });
   ["por","tipo"].forEach(k => $("#s_"+k).onchange = e => { S[k]=e.target.value; estatisticas(); });
