@@ -147,3 +147,10 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 
 .donut.grande .legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:9px 22px;flex:1;min-width:260px;font-size:14px}
 .donut.grande .legend div{white-space:nowrap}
+
+/* botão baixar PNG */
+.card-topo{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.card-topo h2,.card-topo h3{margin:0}
+.dl{border:1px solid var(--line);background:none;color:var(--blue);font:inherit;font-size:13px;border-radius:9px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.dl:hover{background:var(--blue-soft)}
+.dl:disabled{opacity:.6;cursor:progress}

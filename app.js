@@ -33,8 +33,9 @@ function donut(pairs, grande, corDe = corFatia){ const tot = pairs.reduce((a,p)=
   return `<div class="donut${grande?" grande":""}"><svg ${grande?"":'width="140" height="140" '}viewBox="0 0 120 120" role="img" aria-label="Gráfico de rosca">${segs}</svg><div class="legend">${leg}</div></div>`; }
 
 // Hemiciclo: cadeiras em arcos concêntricos, agrupadas por partido (da esquerda para a direita)
-function hemiciclo(pairs, rotulo){
-  const N = pairs.reduce((a,p)=>a+p[1],0); if (!N) return "";
+// calcHemi devolve as posições (num quadro de 220x120); é usado pelo SVG da tela e pelo PNG exportado
+function calcHemi(pairs){
+  const N = pairs.reduce((a,p)=>a+p[1],0); if (!N) return null;
   const rows = Math.max(2, Math.round(Math.sqrt(N/6))), Ri = 60, Ro = 104, cx = 110, cy = 110;
   const radii = Array.from({length:rows}, (_,i) => Ri + i*(Ro-Ri)/(rows-1));
   const soma = radii.reduce((a,b)=>a+b,0);
@@ -45,8 +46,13 @@ function hemiciclo(pairs, rotulo){
   seats.sort((s,t) => t.a - s.a || s.r - t.r);
   const gap = (Ro-Ri)/(rows-1), arco = Math.min(...radii.map((r,i) => Math.PI*r/(n[i]-1))), dot = 0.46*Math.min(gap, arco);
   let idx = 0;
-  const grupos = pairs.map(([k,v]) => { const cs = seats.slice(idx, idx+v).map(s => `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${dot.toFixed(2)}"/>`).join(""); idx += v; return `<g class="par" fill="${corP(k)}" data-p="${esc(k)}" data-n="${v}">${cs}</g>`; }).join("");
-  return `<svg class="hemi-svg" viewBox="0 0 220 120" data-total="${N}" role="img" aria-label="Hemiciclo: ${N} ${esc(rotulo)}">${grupos}<text x="110" y="97" text-anchor="middle" class="hemi-n">${N}</text><text x="110" y="110" text-anchor="middle" class="hemi-l">${esc(rotulo)}</text></svg>`;
+  const grupos = pairs.map(([k,v]) => { const cs = seats.slice(idx, idx+v); idx += v; return {k, v, seats: cs}; });
+  return {N, dot, grupos};
+}
+function hemiciclo(pairs, rotulo){
+  const g = calcHemi(pairs); if (!g) return "";
+  const grupos = g.grupos.map(({k,v,seats}) => `<g class="par" fill="${corP(k)}" data-p="${esc(k)}" data-n="${v}">${seats.map(s => `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${g.dot.toFixed(2)}"/>`).join("")}</g>`).join("");
+  return `<svg class="hemi-svg" viewBox="0 0 220 120" data-total="${g.N}" role="img" aria-label="Hemiciclo: ${g.N} ${esc(rotulo)}">${grupos}<text x="110" y="97" text-anchor="middle" class="hemi-n">${g.N}</text><text x="110" y="110" text-anchor="middle" class="hemi-l">${esc(rotulo)}</text></svg>`;
 }
 const gridPartidos = pairs => `<div class="pgrid">${pairs.map(([k,v]) => `<div class="pcell" style="--c:${corP(k)}" data-p="${esc(k)}" data-n="${v}"><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>`;
 const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; document.body.appendChild(tip);
@@ -72,6 +78,94 @@ function ligarHover(){
     h.addEventListener("mouseleave", esconder);
   });
 }
+
+// ---------- Baixar gráficos em PNG ----------
+// A imagem é desenhada num <canvas> no próprio navegador e salva localmente: nada é enviado a servidor
+// e nenhum script de terceiros é usado. Só entram fontes e imagens do próprio site (senão o navegador bloquearia o download).
+const FT = '"Poppins", system-ui, sans-serif', FD = '"Bebas Neue", Impact, sans-serif';
+const btnDl = id => `<button class="dl" id="${id}" type="button" title="Baixar este gráfico em PNG">⬇ Baixar PNG</button>`;
+const carregarImagem = src => new Promise((ok, erro) => { const i = new Image(); i.onload = () => ok(i); i.onerror = erro; i.src = src; });
+const rrect = (ctx, x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
+function quebrar(ctx, texto, maxW){ const linhas = []; let l = ""; String(texto).split(" ").forEach(p => { const t = l ? l + " " + p : p; if (ctx.measureText(t).width > maxW && l) { linhas.push(l); l = p; } else l = t; }); if (l) linhas.push(l); return linhas; }
+function cortar(ctx, texto, maxW){ let t = String(texto); while (t.length > 1 && ctx.measureText(t).width > maxW) t = t.slice(0, -1); return t === String(texto) ? t : t.trimEnd() + "…"; }
+
+function pintarGrade(ctx, pairs, x, y, w){
+  const cols = 5, gx = 36, gy = 34, cw = (w - gx*(cols-1))/cols, ch = 120;
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  pairs.forEach(([k,v],i) => { const cx = x + (i%cols)*(cw+gx), cy = y + Math.floor(i/cols)*(ch+gy);
+    ctx.fillStyle = corP(k); ctx.fillRect(cx, cy, cw, 7);
+    ctx.fillStyle = "#5b6478"; ctx.font = `24px ${FT}`; ctx.fillText(k, cx, cy + 38);
+    ctx.fillStyle = "#14192b"; ctx.font = `70px ${FD}`; ctx.fillText(String(v), cx, cy + 106); });
+  return Math.ceil(pairs.length/cols)*(ch+gy) - gy;
+}
+function pintarHemi(ctx, pairs, rotulo, x, y, w){
+  const g = calcHemi(pairs); if (!g) return 0; const s = w/220;
+  g.grupos.forEach(({k,seats}) => { ctx.fillStyle = corP(k); seats.forEach(st => { ctx.beginPath(); ctx.arc(x + st.x*s, y + st.y*s, g.dot*s, 0, 2*Math.PI); ctx.fill(); }); });
+  ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#14192b"; ctx.font = `${34*s}px ${FD}`; ctx.fillText(String(g.N), x + 110*s, y + 97*s);
+  ctx.fillStyle = "#5b6478"; ctx.font = `${7*s}px ${FT}`; ctx.fillText(rotulo, x + 110*s, y + 110*s);
+  return 120*s;
+}
+function pintarPainel(ctx, pairs, rotulo, x, y, w){ // hemiciclo centralizado + grade de partidos
+  const hw = Math.min(1000, w), h1 = pintarHemi(ctx, pairs, rotulo, x + (w-hw)/2, y, hw);
+  return h1 + 40 + pintarGrade(ctx, pairs, x, y + h1 + 40, w);
+}
+function pintarBarras(ctx, pairs, x, y, w){
+  const lab = 330, val = 90, rowH = 54, barH = 26, max = Math.max(...pairs.map(p=>p[1]), 1), bw = w - lab - val;
+  ctx.textBaseline = "middle";
+  pairs.forEach(([k,v],i) => { const cy = y + i*rowH;
+    ctx.fillStyle = "#14192b"; ctx.font = `26px ${FT}`; ctx.textAlign = "left"; ctx.fillText(cortar(ctx, k, lab - 20), x, cy + rowH/2);
+    const gr = ctx.createLinearGradient(x + lab, 0, x + lab + bw, 0); gr.addColorStop(0, "#1f4fd8"); gr.addColorStop(1, "#5d85ed");
+    ctx.fillStyle = gr; rrect(ctx, x + lab, cy + (rowH-barH)/2, Math.max(12, bw*v/max), barH, barH/2); ctx.fill();
+    ctx.fillStyle = "#5b6478"; ctx.textAlign = "right"; ctx.fillText(String(v), x + w, cy + rowH/2); });
+  ctx.textBaseline = "alphabetic"; return pairs.length*rowH;
+}
+function pintarRosca(ctx, pairs, corDe, x, y, w){
+  const tot = pairs.reduce((a,p)=>a+p[1],0) || 1, R = 270, r = R*0.57, cx = x + R + 10, cy = y + R + 10; let ang = -Math.PI/2;
+  pairs.forEach(([k,v],i) => { const a2 = ang + v/tot*2*Math.PI; ctx.beginPath(); ctx.arc(cx, cy, R, ang, a2); ctx.arc(cx, cy, r, a2, ang, true); ctx.closePath();
+    ctx.fillStyle = corDe(k,i); ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.stroke(); ang = a2; });
+  const lx = x + 2*R + 80, lw = w - (lx - x), cols = pairs.length > 24 ? 3 : pairs.length > 11 ? 2 : 1, rowH = cols === 3 ? 38 : 46, porCol = Math.ceil(pairs.length/cols), cw = lw/cols;
+  const hLeg = porCol*rowH, ly = y + Math.max(0, (2*R + 20 - hLeg)/2);
+  ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.font = `${cols === 3 ? 21 : 25}px ${FT}`;
+  pairs.forEach(([k,v],i) => { const col = Math.floor(i/porCol), px = lx + col*cw, py = ly + (i%porCol)*rowH + rowH/2;
+    ctx.fillStyle = corDe(k,i); rrect(ctx, px, py - 10, 20, 20, 5); ctx.fill();
+    ctx.fillStyle = "#14192b"; ctx.fillText(cortar(ctx, `${k}  ${v} (${Math.round(v/tot*100)}%)`, cw - 40), px + 32, py); });
+  ctx.textBaseline = "alphabetic"; return Math.max(2*R + 20, hLeg);
+}
+
+async function exportarPng(botao, {titulo, subtitulo, rodape, pintar}){
+  const rotulo = botao.textContent; botao.disabled = true; botao.textContent = "Gerando…";
+  try {
+    await Promise.all([document.fonts.load(`40px "Bebas Neue"`), document.fonts.load(`24px Poppins`), document.fonts.ready]);
+    const logo = await carregarImagem("assets/logo.png").catch(() => null);
+    const W = 1600, M = 80, cw = W - 2*M, lw = 260, lh = logo ? lw*logo.height/logo.width : 0;
+    const site = location.protocol.startsWith("http") ? location.host : "", data = new Date().toLocaleDateString("pt-BR");
+    const medir = document.createElement("canvas").getContext("2d");
+    medir.font = `28px ${FT}`; const linhasSub = quebrar(medir, subtitulo, cw);
+    medir.font = `22px ${FT}`; const linhasRod = quebrar(medir, rodape, cw);
+    const hGraf = pintar(medir, M, 0, cw);
+    const yTit = M + lh + 80, ySub = yTit + 50, yGraf = ySub + linhasSub.length*40 + 40, yRod = yGraf + hGraf + 60;
+    const H = Math.ceil(yRod + 30 + linhasRod.length*32 + 44 + M*0.6);
+    const c = document.createElement("canvas"); c.width = W; c.height = H; const ctx = c.getContext("2d");
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+    if (logo) ctx.drawImage(logo, M, M, lw, lh);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#14192b"; ctx.font = `80px ${FD}`; ctx.fillText(titulo.toUpperCase(), M, yTit);
+    ctx.fillStyle = "#427cad"; for (let i = 0; i < 12; i++) ctx.fillRect(M + i*12, yTit + 16, 5, 12);
+    ctx.fillStyle = "#5b6478"; ctx.font = `28px ${FT}`; linhasSub.forEach((l,i) => ctx.fillText(l, M, ySub + 20 + i*40));
+    pintar(ctx, M, yGraf, cw);
+    ctx.fillStyle = "#dde2ec"; ctx.fillRect(M, yRod - 24, cw, 2);
+    ctx.fillStyle = "#5b6478"; ctx.font = `22px ${FT}`; ctx.textAlign = "left"; linhasRod.forEach((l,i) => ctx.fillText(l, M, yRod + 14 + i*32));
+    ctx.fillStyle = "#14192b"; ctx.font = `600 22px ${FT}`; ctx.fillText(`Mapa do Congresso${site ? " · " + site : ""} · gerado em ${data}`, M, yRod + 30 + linhasRod.length*32);
+    const blob = await new Promise((ok, erro) => c.toBlob(b => b ? ok(b) : erro(new Error("sem imagem")), "image/png"));
+    const nome = titulo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `mapa-do-congresso-${nome}.png`;
+    document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+  } catch (e) {
+    alert("Não foi possível gerar a imagem. Se você abriu o site como arquivo do computador, use o endereço publicado do site.");
+  } finally { botao.disabled = false; botao.textContent = rotulo; }
+}
+
 const painelCasa = (pairs, rotulo) => `<div class="hemi">${hemiciclo(pairs, rotulo)}${gridPartidos(pairs)}</div>`;
 
 function home(){
@@ -90,18 +184,23 @@ function home(){
     <div class="kpi"><b>${R.camara.total}</b><span>deputados federais eleitos</span></div>
     <div class="kpi"><b>${PRONTOS.length}</b><span>perfis publicados</span></div>
   </div>
-  <div class="card painel"><h2>Senado Federal</h2>
+  <div class="card painel"><div class="card-topo"><h2>Senado Federal</h2>${btnDl("dl_senado")}</div>
     ${painelCasa(completa,"senadores")}
     <p class="nota">Bancada completa: 54 eleitos em 2026 (mandato de 2027 a 2034) + 27 eleitos em 2022 (mandato até 2031).</p></div>
-  <div class="card painel"><h2>Câmara dos Deputados</h2>${painelCasa(R.camara.partidos,"deputados")}
+  <div class="card painel"><div class="card-topo"><h2>Câmara dos Deputados</h2>${btnDl("dl_camara")}</div>${painelCasa(R.camara.partidos,"deputados")}
     <p class="nota">Os 513 eleitos já estão na lista de Parlamentares; os perfis dos deputados estão em produção.</p></div>
   <h2>Senadores com perfil publicado</h2>
   <div class="grid2">
-    <div class="card"><h3>Renovação entre os eleitos em 2026</h3>${donut(count(novos,p=>p.situacao))}</div>
-    <div class="card"><h3>Áreas temáticas</h3>${bars(count(PRONTOS,p=>p.areas).slice(0,8))}</div>
+    <div class="card"><div class="card-topo"><h3>Renovação entre os eleitos em 2026</h3>${btnDl("dl_renov")}</div>${donut(count(novos,p=>p.situacao))}</div>
+    <div class="card"><div class="card-topo"><h3>Áreas temáticas</h3>${btnDl("dl_areas")}</div>${bars(count(PRONTOS,p=>p.areas).slice(0,8))}</div>
   </div>
   <p class="nota" style="margin-top:20px">${esc(R.fonte)}</p>`;
   ligarHover();
+  const renov = count(novos, p => p.situacao), areasTop = count(PRONTOS, p => p.areas).slice(0,8);
+  $("#dl_senado").onclick = e => exportarPng(e.currentTarget, {titulo:"Senado Federal: bancada completa", subtitulo:`${nCompleta} senadores por partido · ${R.senado.eleitos} eleitos em 2026 (mandato de 2027 a 2034) + ${nCompleta - R.senado.eleitos} eleitos em 2022 (mandato até 2031)`, rodape:`Fonte: ${R.fonte}; senadores eleitos em 2022 conforme a planilha do projeto.`, pintar:(ctx,x,y,w) => pintarPainel(ctx, completa, "senadores", x, y, w)});
+  $("#dl_camara").onclick = e => exportarPng(e.currentTarget, {titulo:"Câmara dos Deputados: composição eleita em 2026", subtitulo:`${R.camara.total} deputados federais por partido`, rodape:`Fonte: ${R.fonte}`, pintar:(ctx,x,y,w) => pintarPainel(ctx, R.camara.partidos, "deputados", x, y, w)});
+  $("#dl_renov").onclick = e => exportarPng(e.currentTarget, {titulo:"Renovação entre os senadores eleitos em 2026", subtitulo:`${novos.length} senadores eleitos em 2026 com perfil publicado, por situação`, rodape:"Fonte: planilha de perfis do projeto (senadores com perfil pronto).", pintar:(ctx,x,y,w) => pintarRosca(ctx, renov, corFatia, x, y, w)});
+  $("#dl_areas").onclick = e => exportarPng(e.currentTarget, {titulo:"Áreas temáticas dos senadores", subtitulo:`As 8 áreas mais frequentes entre os ${PRONTOS.length} senadores com perfil publicado (um senador pode ter mais de uma área)`, rodape:"Fonte: planilha de perfis do projeto (senadores com perfil pronto).", pintar:(ctx,x,y,w) => pintarBarras(ctx, areasTop, x, y, w)});
 }
 
 const CASAS = ["Câmara dos Deputados","Senado Federal"];
@@ -166,7 +265,15 @@ function estatisticas(){
     <div class="filters"><label class="field">Dividir por<select id="s_por">${Object.entries(DIMS).map(([k,[n]])=>`<option value="${k}"${k===S.por?" selected":""}>${n}</option>`).join("")}</select></label>
     <label class="field">Gráfico<select id="s_tipo"><option value="barras"${S.tipo==="barras"?" selected":""}>Barras</option><option value="rosca"${S.tipo==="rosca"?" selected":""}>Rosca</option></select></label></div></div>
   <div class="kpis"><div class="kpi"><b>${r.length}</b><span>parlamentares no filtro</span></div><div class="kpi"><b>${Math.round(r.length/(PRONTOS.length||1)*100)}%</b><span>do total</span></div><div class="kpi"><b>${dados.length}</b><span>grupos em “${DIMS[S.por][0]}”</span></div></div>
-  <div class="card"><h3>Parlamentares por ${DIMS[S.por][0].toLowerCase()}</h3>${!r.length?`<p class="lead">${S.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum parlamentar com esses filtros."}</p>`:S.tipo==="rosca"?donut(dados,true,S.por==="partido"?(k=>corP(k)):corFatia):bars(dados.slice(0,20))}</div>`;
+  <div class="card"><div class="card-topo"><h3>Parlamentares por ${DIMS[S.por][0].toLowerCase()}</h3>${r.length ? btnDl("dl_stats") : ""}</div>${!r.length?`<p class="lead">${S.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum parlamentar com esses filtros."}</p>`:S.tipo==="rosca"?donut(dados,true,S.por==="partido"?(k=>corP(k)):corFatia):bars(dados.slice(0,20))}</div>`;
+  const btn = $("#dl_stats");
+  if (btn) btn.onclick = e => {
+    const ROT = {casa:"Casa", partido:"Partido", uf:"UF", situacao:"Situação", ocupacao:"Ocupação", tema:"Tema"};
+    const filtros = FILTROS.filter(k => S[k]).map(k => `${ROT[k]}: ${S[k]}`).join(" · ") || "sem filtros";
+    exportarPng(e.currentTarget, {titulo:`Parlamentares por ${DIMS[S.por][0].toLowerCase()}`, subtitulo:`${r.length} parlamentares (${filtros})`,
+      rodape:`Fonte: planilha de perfis do projeto (${PRONTOS.length} senadores com perfil publicado).`,
+      pintar:(ctx,x,y,w) => S.tipo === "rosca" ? pintarRosca(ctx, dados, S.por === "partido" ? (k => corP(k)) : corFatia, x, y, w) : pintarBarras(ctx, dados.slice(0,20), x, y, w)});
+  };
   FILTROS.forEach(k => $("#s_"+k).onchange = e => { S[k]=e.target.value; estatisticas(); });
   ["por","tipo"].forEach(k => $("#s_"+k).onchange = e => { S[k]=e.target.value; estatisticas(); });
   const c = $("#s_clr"); if (c) c.onclick = () => { FILTROS.forEach(k=>S[k]=""); estatisticas(); };
