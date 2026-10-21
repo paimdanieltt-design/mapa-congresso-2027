@@ -20,5 +20,15 @@ window.NOTICIAS = [
     "resumo": "PL conquista 23 cadeiras a mais e seguirá com a maior bancada da Casa; mulheres ascendem, mas continuarão sendo minoria.",
     "tags": ["Eleições 2026", "Câmara dos Deputados", "Composição partidária"],
     "parlamentares": []
+  },
+  {
+    "titulo": "Bancada evangélica perde 4 de 5 presidentes, e urnas desgastam velha guarda",
+    "veiculo": "Folha de S.Paulo",
+    "data": "2026-10-06",
+    "url": "https://www1.folha.uol.com.br/poder/2026/10/bancada-evangelica-perde-4-de-5-presidentes-e-urnas-desgastam-velha-guarda.shtml",
+    "imagem": "https://f.i.uol.com.br/fotografia/2024/09/02/172527936466d5ac8410ba3_1725279364_3x2_rt.jpg",
+    "resumo": "Top 5 dos deputados mais votados tem 3 crentes: Nikolas Ferreira, Lucas Pavanato e André Fernandes.",
+    "tags": ["Eleições 2026", "Câmara dos Deputados", "Religiosidade"],
+    "parlamentares": []
   }
 ];
