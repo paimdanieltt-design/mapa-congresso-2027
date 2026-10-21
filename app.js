@@ -25,10 +25,10 @@ const selo = p => !p.pronto ? `<span class="badge cinza">Em produção</span>` :
 function bars(pairs){ const max = Math.max(...pairs.map(p=>p[1]),1);
   return pairs.map(([k,v]) => `<div class="bar"><span>${esc(k)}</span><i style="width:${v/max*100}%"></i><em>${v}</em></div>`).join(""); }
 
-function donut(pairs){ const tot = pairs.reduce((a,p)=>a+p[1],0)||1; let acc = 0; const r=42, c=2*Math.PI*r;
-  const segs = pairs.map(([k,v],i) => { const len = v/tot*c; const s = `<circle r="${r}" cx="60" cy="60" fill="none" stroke="${COR[i%COR.length]}" stroke-width="18" stroke-dasharray="${len} ${c-len}" stroke-dashoffset="${-acc}" transform="rotate(-90 60 60)"/>`; acc += len; return s; }).join("");
-  const leg = pairs.map(([k,v],i) => `<div><i style="background:${COR[i%COR.length]}"></i>${esc(k)} <b>${v}</b> <span style="color:var(--muted)">(${Math.round(v/tot*100)}%)</span></div>`).join("");
-  return `<div class="donut"><svg width="140" height="140" viewBox="0 0 120 120" role="img" aria-label="Gráfico de rosca">${segs}</svg><div class="legend">${leg}</div></div>`; }
+function donut(pairs, grande){ const tot = pairs.reduce((a,p)=>a+p[1],0)||1; let acc = 0; const r=42, c=2*Math.PI*r;
+  const segs = pairs.map(([k,v],i) => { const len = v/tot*c; const s = `<circle r="${r}" cx="60" cy="60" fill="none" stroke="${k==="Outros"?"#c5ccdc":COR[i%COR.length]}" stroke-width="18" stroke-dasharray="${len} ${c-len}" stroke-dashoffset="${-acc}" transform="rotate(-90 60 60)"/>`; acc += len; return s; }).join("");
+  const leg = pairs.map(([k,v],i) => `<div><i style="background:${k==="Outros"?"#c5ccdc":COR[i%COR.length]}"></i>${esc(k)} <b>${v}</b> <span style="color:var(--muted)">(${Math.round(v/tot*100)}%)</span></div>`).join("");
+  return `<div class="donut${grande?" grande":""}"><svg ${grande?"":'width="140" height="140" '}viewBox="0 0 120 120" role="img" aria-label="Gráfico de rosca">${segs}</svg><div class="legend">${leg}</div></div>`; }
 
 // Hemiciclo: cadeiras em arcos concêntricos, agrupadas por partido (da esquerda para a direita)
 function hemiciclo(pairs, rotulo){
@@ -150,9 +150,11 @@ function ficha(id){
     ${relacionadas(p)}</div></div>`;
 }
 
-const S = {casa:"",partido:"",uf:"",situacao:"",ocupacao:"",tema:"",por:"uf",tipo:"barras"};
+const S = {casa:"",partido:"",uf:"",situacao:"",ocupacao:"",tema:"",por:"partido",tipo:"barras"};
 const FILTROS = ["casa","partido","uf","situacao","ocupacao","tema"];
 const DIMS = {uf:["Estado",p=>p.uf],partido:["Partido",p=>p.partido],situacao:["Situação",p=>p.situacao],tema:["Área temática",p=>p.areas],ocupacao:["Ocupação",p=>p.ocupacoes],eleicao:["Eleição",p=>p.eleicao]};
+// mantém os maiores grupos e soma o restante em "Outros", para a rosca somar 100%
+const agrupar = (pairs, max) => pairs.length <= max + 1 ? pairs : [...pairs.slice(0,max), ["Outros", pairs.slice(max).reduce((s,p)=>s+p[1],0)]];
 function estatisticas(){
   const r = PRONTOS.filter(p => (!S.casa||p.casa===S.casa)&&(!S.partido||p.partido===S.partido)&&(!S.uf||p.uf===S.uf)&&(!S.situacao||p.situacao===S.situacao)&&(!S.ocupacao||(p.ocupacoes||[]).includes(S.ocupacao))&&(!S.tema||p.areas.includes(S.tema)));
   const dados = count(r, DIMS[S.por][1]);
@@ -164,7 +166,7 @@ function estatisticas(){
     <div class="filters"><label class="field">Dividir por<select id="s_por">${Object.entries(DIMS).map(([k,[n]])=>`<option value="${k}"${k===S.por?" selected":""}>${n}</option>`).join("")}</select></label>
     <label class="field">Gráfico<select id="s_tipo"><option value="barras"${S.tipo==="barras"?" selected":""}>Barras</option><option value="rosca"${S.tipo==="rosca"?" selected":""}>Rosca</option></select></label></div></div>
   <div class="kpis"><div class="kpi"><b>${r.length}</b><span>parlamentares no filtro</span></div><div class="kpi"><b>${Math.round(r.length/(PRONTOS.length||1)*100)}%</b><span>do total</span></div><div class="kpi"><b>${dados.length}</b><span>grupos em “${DIMS[S.por][0]}”</span></div></div>
-  <div class="card"><h3>Parlamentares por ${DIMS[S.por][0].toLowerCase()}</h3>${!r.length?`<p class="lead">${S.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum parlamentar com esses filtros."}</p>`:S.tipo==="rosca"?donut(dados.slice(0,8)):bars(dados.slice(0,20))}</div>`;
+  <div class="card"><h3>Parlamentares por ${DIMS[S.por][0].toLowerCase()}</h3>${!r.length?`<p class="lead">${S.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum parlamentar com esses filtros."}</p>`:S.tipo==="rosca"?donut(agrupar(dados,7),true):bars(dados.slice(0,20))}</div>`;
   FILTROS.forEach(k => $("#s_"+k).onchange = e => { S[k]=e.target.value; estatisticas(); });
   ["por","tipo"].forEach(k => $("#s_"+k).onchange = e => { S[k]=e.target.value; estatisticas(); });
   const c = $("#s_clr"); if (c) c.onclick = () => { FILTROS.forEach(k=>S[k]=""); estatisticas(); };
