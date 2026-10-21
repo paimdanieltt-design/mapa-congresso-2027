@@ -154,3 +154,7 @@ h1::after{content:"";display:block;width:96px;height:6px;margin-top:10px;backgro
 .dl{border:1px solid var(--line);background:none;color:var(--blue);font:inherit;font-size:13px;border-radius:9px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 .dl:hover{background:var(--blue-soft)}
 .dl:disabled{opacity:.6;cursor:progress}
+
+/* destaque ao passar o mouse: Senado em azul, Câmara em verde */
+.pcard.senado:hover,.pcard.senado:focus-visible{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.pcard.camara:hover,.pcard.camara:focus-visible{border-color:var(--verde-forte);box-shadow:0 0 0 1px var(--verde-forte)}

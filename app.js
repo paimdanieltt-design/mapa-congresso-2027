@@ -218,7 +218,7 @@ function lista(){
     $("#clr").hidden = !Object.values(F).some(v => v);
     Object.keys(F).forEach(k => k!=="q" && $("#"+k).classList.toggle("ativo", !!F[k]));
     $("#cnt").textContent = `${r.length} parlamentar${r.length===1?"":"es"}`;
-    $("#cards").innerHTML = r.map(p => `<a class="pcard" href="#/parlamentar/${esc(p.id)}">${avatar(p)}<div><b>${esc(p.nome)}</b><small>${[p.partido,p.uf].filter(Boolean).map(esc).join("/")} · ${p.casa==="Senado Federal"?"Senado":"Câmara"}</small>${selo(p)}</div></a>`).join("") || `<p class="lead">${F.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum resultado."}</p>`;
+    $("#cards").innerHTML = r.map(p => `<a class="pcard ${p.casa==="Senado Federal"?"senado":"camara"}" href="#/parlamentar/${esc(p.id)}">${avatar(p)}<div><b>${esc(p.nome)}</b><small>${[p.partido,p.uf].filter(Boolean).map(esc).join("/")} · ${p.casa==="Senado Federal"?"Senado":"Câmara"}</small>${selo(p)}</div></a>`).join("") || `<p class="lead">${F.casa==="Câmara dos Deputados" ? "Os perfis dos deputados ainda estão em produção." : "Nenhum resultado."}</p>`;
   };
   Object.keys(F).forEach(k => { const el = $("#"+k); el.oninput = () => { F[k] = el.value; render(); }; });
   $("#clr").onclick = () => { Object.keys(F).forEach(k => F[k]=""); lista(); };
