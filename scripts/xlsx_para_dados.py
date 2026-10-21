@@ -6,7 +6,8 @@ Uso:
     python3 scripts/xlsx_para_dados.py caminho/da/planilha.xlsx [--fotos]
 
 --fotos baixa as fotos novas ou trocadas (links do Google Drive públicos) para
-assets/fotos/, redimensionadas, e apaga fotos de quem saiu da planilha.
+assets/fotos/, redimensionadas; para senadores sem foto, tenta a foto oficial na
+API de dados abertos do Senado; e apaga fotos de quem saiu da planilha.
 
 Campos internos (Responsável, Revisor) NÃO vão para o site.
 Só perfis com Status = "Feito" exportam o conteúdo; os demais entram apenas
@@ -130,14 +131,16 @@ def id_drive(u):
     return m.group(1) if m else None
 
 
-def baixar_foto(fid, destino):
+def baixar_bytes(url):
     ctx = ssl.create_default_context(cafile=os.environ.get("SSL_CERT_FILE") or None)
-    req = urllib.request.Request(f"https://drive.google.com/thumbnail?id={fid}&sz=w600",
-                                 headers={"User-Agent": "Mozilla/5.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "*/*"})
+    return urllib.request.urlopen(req, timeout=40, context=ctx).read()
+
+
+def salvar_foto(url, destino):
     try:
-        dados = urllib.request.urlopen(req, timeout=40, context=ctx).read()
         from PIL import Image
-        img = Image.open(io.BytesIO(dados)).convert("RGB")
+        img = Image.open(io.BytesIO(baixar_bytes(url))).convert("RGB")
         img.thumbnail((400, 500))
         destino.parent.mkdir(parents=True, exist_ok=True)
         img.save(destino, "JPEG", quality=82, optimize=True)
@@ -145,6 +148,56 @@ def baixar_foto(fid, destino):
     except Exception as e:  # noqa: BLE001
         print(f"  ! foto falhou ({destino.name}): {e}", file=sys.stderr)
         return False
+
+
+def baixar_foto(fid, destino):
+    return salvar_foto(f"https://drive.google.com/thumbnail?id={fid}&sz=w600", destino)
+
+
+def norm(s):
+    return re.sub(r"[^a-z0-9 ]", "", sem_acento(s).lower()).strip()
+
+
+def indice_api_senado():
+    """Parlamentares da legislatura atual e da próxima, pela API de dados abertos do Senado."""
+    idx = []
+    for url, chave in (("https://legis.senado.leg.br/dadosabertos/senador/lista/atual", "ListaParlamentarEmExercicio"),
+                       ("https://legis.senado.leg.br/dadosabertos/senador/lista/legislatura/58", "ListaParlamentarLegislatura")):
+        try:
+            req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0"})
+            ctx = ssl.create_default_context(cafile=os.environ.get("SSL_CERT_FILE") or None)
+            dados = json.loads(urllib.request.urlopen(req, timeout=60, context=ctx).read())
+            idx += [p["IdentificacaoParlamentar"] for p in dados[chave]["Parlamentares"]["Parlamentar"]]
+        except Exception as e:  # noqa: BLE001
+            print(f"  ! API do Senado indisponível ({url}): {e}", file=sys.stderr)
+    return idx
+
+
+def achar_na_api(nome, idx):
+    n = norm(nome)
+    exatos = [i for i in idx if n in (norm(i["NomeParlamentar"]), norm(i["NomeCompletoParlamentar"]))]
+    if not exatos:  # todas as palavras do nome aparecem no nome da API (ex.: "Professora Dorinha")
+        palavras = set(n.split())
+        exatos = [i for i in idx if palavras <= set(norm(i["NomeParlamentar"]).split())]
+    return exatos[0] if len({i["CodigoParlamentar"] for i in exatos}) == 1 else None
+
+
+def fotos_do_senado(perfis, manifesto):
+    """Para senadores sem foto local, tenta a foto oficial na API do Senado."""
+    faltam = [p for p in perfis if p["casa"] == "Senado Federal" and not (PASTA_FOTOS / f"{p['id']}.jpg").exists()]
+    if not faltam:
+        return
+    idx = indice_api_senado()
+    for p in faltam:
+        i = achar_na_api(p["nome"], idx)
+        url = (i or {}).get("UrlFotoParlamentar")
+        if not url:
+            print(f"  - {p['nome']}: sem foto na API do Senado" + ("" if i else " (nome não encontrado)"))
+            continue
+        destino = PASTA_FOTOS / f"{p['id']}.jpg"
+        print("  foto do Senado:", p["nome"])
+        if salvar_foto(url.replace("http://", "https://"), destino):
+            manifesto[p["id"]] = f"senado:{i['CodigoParlamentar']}"
 
 
 def ler_aba(ws, cols, casa, eleicao_padrao, vistos, manifesto, baixar):
@@ -188,6 +241,8 @@ def ler_aba(ws, cols, casa, eleicao_padrao, vistos, manifesto, baixar):
                 "pagina_oficial": oficial[0] if oficial else "",
                 "fontes": urls(c(r, "fontes")),
             })
+        elif (PASTA_FOTOS / f"{pid}.jpg").exists():
+            p["foto"] = f"assets/fotos/{pid}.jpg"
         perfis.append(p)
     return perfis
 
@@ -203,6 +258,12 @@ def main():
     vistos = set()
     perfis = ler_aba(wb["SENADO"], SENADO, "Senado Federal", "Eleito em 2026", vistos, manifesto, args.fotos)
     perfis += ler_aba(wb["CÂMARA"], CAMARA, "Câmara dos Deputados", "Eleito em 2026", vistos, manifesto, args.fotos)
+
+    if args.fotos:
+        fotos_do_senado(perfis, manifesto)
+        for p in perfis:
+            if (PASTA_FOTOS / f"{p['id']}.jpg").exists() and not p.get("foto") and p["casa"] == "Senado Federal":
+                p["foto"] = f"assets/fotos/{p['id']}.jpg"
 
     if args.fotos:  # apaga fotos de quem saiu da planilha
         PASTA_FOTOS.mkdir(parents=True, exist_ok=True)
