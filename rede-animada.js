@@ -39,7 +39,7 @@
       brilhou.set(aresta, performance.now());
       const [a, b] = G.arestas[aresta], inicio = de ?? (Math.random() < 0.5 ? a : b), fim = inicio === a ? b : a;
       const [x1, y1] = pos(inicio), [x2, y2] = pos(fim), comp = Math.hypot(x2 - x1, y2 - y1);
-      pulsos.push({ aresta, inicio, fim, t: 0, comp, vel: (460 + Math.random() * 280) * esc, cauda: (34 + Math.random() * 22) * esc });
+      pulsos.push({ aresta, inicio, fim, t: 0, comp, vel: (270 + Math.random() * 170) * esc, cauda: (44 + Math.random() * 26) * esc });
     }
     function seguir(p) {  // ao chegar numa pessoa, acende o nó e segue por outra linha (quase sempre)
       aneis.push({ no: p.fim, t: 0 });
@@ -51,12 +51,12 @@
       if (!rodando) return;
       const dt = Math.min(0.05, (agora - ultimo) / 1000 || 0.016); ultimo = agora;
       if (pulsos.length < maxPulsos() && visiveis.length && agora > proximoNascimento) {
-        novoPulso(escolher()); proximoNascimento = agora + 90 + Math.random() * 230;
+        novoPulso(escolher()); proximoNascimento = agora + 140 + Math.random() * 300;
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineCap = "round";
       for (const a of aneis) a.t += dt;
-      aneis = aneis.filter(a => a.t < 0.45);
-      for (const a of aneis) { const [x, y] = pos(a.no), k = a.t / 0.45;
+      aneis = aneis.filter(a => a.t < 0.6);
+      for (const a of aneis) { const [x, y] = pos(a.no), k = a.t / 0.6;
         ctx.strokeStyle = `rgba(${COR_NO},${0.6 * (1 - k) ** 1.5})`; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(x, y, 14 + 16 * k, 0, 2 * Math.PI); ctx.stroke(); }
       const vivos = [];
       for (const p of pulsos) {
