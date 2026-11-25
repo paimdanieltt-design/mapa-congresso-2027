@@ -25,52 +25,55 @@
       pulsos = []; aneis = [];
     };
     const pos = i => [ox + G.nos[i][0] * esc, oy + G.nos[i][1] * esc];
-    const maxPulsos = () => (W < 600 ? 4 : 8);
+    const maxPulsos = () => (W < 600 ? 5 : 10);
 
-    const escolher = () => {  // prefere linhas perto da borda da página, onde o fundo é mais visível
-      const pesos = visiveis.map(i => { const [a, b] = G.arestas[i], y = (pos(a)[1] + pos(b)[1]) / 2 / H, v = posY === 1 ? y : 1 - y; return 0.05 + Math.max(0, Math.min(1, v)) ** 2; });
+    const brilhou = new Map();   // aresta -> quando brilhou pela última vez
+    const recente = (i, ms) => performance.now() - (brilhou.get(i) || -1e9) < ms;
+    const escolher = () => {  // espalha os clarões: linhas que brilharam há pouco quase não são sorteadas; leve preferência pela borda da página
+      const pesos = visiveis.map(i => { const [a, b] = G.arestas[i], y = (pos(a)[1] + pos(b)[1]) / 2 / H, v = posY === 1 ? y : 1 - y; return (recente(i, 9000) ? 0.02 : 1) * (0.6 + 0.4 * Math.max(0, Math.min(1, v))); });
       let r = Math.random() * pesos.reduce((x, y) => x + y, 0);
       for (let k = 0; k < pesos.length; k++) { r -= pesos[k]; if (r <= 0) return visiveis[k]; }
       return visiveis[visiveis.length - 1];
     };
     function novoPulso(aresta, de) {
+      brilhou.set(aresta, performance.now());
       const [a, b] = G.arestas[aresta], inicio = de ?? (Math.random() < 0.5 ? a : b), fim = inicio === a ? b : a;
       const [x1, y1] = pos(inicio), [x2, y2] = pos(fim), comp = Math.hypot(x2 - x1, y2 - y1);
-      pulsos.push({ aresta, inicio, fim, t: 0, comp, vel: (160 + Math.random() * 100) * esc, cauda: (75 + Math.random() * 45) * esc });
+      pulsos.push({ aresta, inicio, fim, t: 0, comp, vel: (460 + Math.random() * 280) * esc, cauda: (34 + Math.random() * 22) * esc });
     }
     function seguir(p) {  // ao chegar numa pessoa, acende o nó e segue por outra linha (quase sempre)
       aneis.push({ no: p.fim, t: 0 });
-      const opcoes = adj[p.fim].filter(i => i !== p.aresta && visiveis.includes(i));
-      if (opcoes.length && Math.random() < 0.88) novoPulso(opcoes[Math.floor(Math.random() * opcoes.length)], p.fim);
+      const todas = adj[p.fim].filter(i => i !== p.aresta && visiveis.includes(i)), frescas = todas.filter(i => !recente(i, 6000)), opcoes = frescas.length ? frescas : todas;
+      if (opcoes.length && Math.random() < 0.7) novoPulso(opcoes[Math.floor(Math.random() * opcoes.length)], p.fim);
     }
 
     function quadro(agora) {
       if (!rodando) return;
       const dt = Math.min(0.05, (agora - ultimo) / 1000 || 0.016); ultimo = agora;
       if (pulsos.length < maxPulsos() && visiveis.length && agora > proximoNascimento) {
-        novoPulso(escolher()); proximoNascimento = agora + 250 + Math.random() * 700;
+        novoPulso(escolher()); proximoNascimento = agora + 90 + Math.random() * 230;
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineCap = "round";
       for (const a of aneis) a.t += dt;
-      aneis = aneis.filter(a => a.t < 0.9);
-      for (const a of aneis) { const [x, y] = pos(a.no), k = a.t / 0.9;
-        ctx.strokeStyle = `rgba(${COR_NO},${0.7 * (1 - k)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 12 + 22 * k, 0, 2 * Math.PI); ctx.stroke(); }
+      aneis = aneis.filter(a => a.t < 0.45);
+      for (const a of aneis) { const [x, y] = pos(a.no), k = a.t / 0.45;
+        ctx.strokeStyle = `rgba(${COR_NO},${0.6 * (1 - k) ** 1.5})`; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(x, y, 14 + 16 * k, 0, 2 * Math.PI); ctx.stroke(); }
       const vivos = [];
       for (const p of pulsos) {
         p.t += p.vel * dt;
         const [x1, y1] = pos(p.inicio), [x2, y2] = pos(p.fim), ux = (x2 - x1) / p.comp, uy = (y2 - y1) / p.comp;
-        const ini = RAIO_AVATAR * esc, fimUtil = p.comp - ini;               // trecho livre da linha
-        const cabeca = Math.min(p.t, fimUtil + p.cauda * 0.15), rabo = Math.max(ini, cabeca - p.cauda);
-        if (cabeca > ini && rabo < fimUtil) {
-          const c0 = Math.max(ini, rabo), c1 = Math.min(fimUtil, cabeca);
+        const ini = RAIO_AVATAR * esc, fimUtil = p.comp - ini;                       // trecho livre da linha, entre as duas pessoas
+        const cabeca = p.t, c0 = Math.max(ini, cabeca - p.cauda), c1 = Math.min(fimUtil, cabeca);
+        if (c1 > c0 + 0.5) {                                                        // só desenha o pedaço do feixe que está dentro da linha
           const xa = x1 + ux * c0, ya = y1 + uy * c0, xb = x1 + ux * c1, yb = y1 + uy * c1;
           const gr = ctx.createLinearGradient(xa, ya, xb, yb);
           gr.addColorStop(0, `rgba(${COR_NUCLEO},0)`); gr.addColorStop(0.65, `rgba(${COR_NUCLEO},0.7)`); gr.addColorStop(1, `rgba(${COR_BRILHO},1)`);
-          ctx.shadowColor = `rgba(${COR_NUCLEO},0.75)`; ctx.shadowBlur = 14; ctx.strokeStyle = gr; ctx.lineWidth = 2.8;
+          ctx.shadowColor = `rgba(${COR_NUCLEO},0.75)`; ctx.shadowBlur = 8; ctx.strokeStyle = gr; ctx.lineWidth = 2.6;
           ctx.beginPath(); ctx.moveTo(xa, ya); ctx.lineTo(xb, yb); ctx.stroke(); ctx.shadowBlur = 0;
           if (cabeca <= fimUtil) { ctx.fillStyle = `rgba(${COR_BRILHO},0.95)`; ctx.beginPath(); ctx.arc(xb, yb, 2.8, 0, 2 * Math.PI); ctx.fill(); }
         }
-        if (rabo >= fimUtil) seguir(p); else vivos.push(p);   // o pulso termina quando a cauda chega à próxima pessoa
+        if (!p.chegou && cabeca >= fimUtil) { p.chegou = true; seguir(p); }          // a luz chegou na pessoa: acende o nó e segue por outra linha
+        if (cabeca - p.cauda < fimUtil) vivos.push(p);                              // o feixe some assim que o rabo sai da linha
       }
       pulsos = vivos;
       requestAnimationFrame(quadro);
