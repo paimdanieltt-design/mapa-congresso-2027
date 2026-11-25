@@ -29,8 +29,17 @@
 
     const brilhou = new Map();   // aresta -> quando brilhou pela última vez
     const recente = (i, ms) => performance.now() - (brilhou.get(i) || -1e9) < ms;
-    const escolher = () => {  // espalha os clarões: linhas que brilharam há pouco quase não são sorteadas; leve preferência pela borda da página
-      const pesos = visiveis.map(i => { const [a, b] = G.arestas[i], y = (pos(a)[1] + pos(b)[1]) / 2 / H, v = posY === 1 ? y : 1 - y; return (recente(i, 9000) ? 0.02 : 1) * (0.6 + 0.4 * Math.max(0, Math.min(1, v))); });
+    const escolher = () => {  // espalha os clarões por toda a rede: dá mais chance às linhas que brilharam há mais tempo e evita as perto de outro clarão
+      const agora = performance.now();
+      const ativos = pulsos.map(p => { const [x1, y1] = pos(p.inicio), [x2, y2] = pos(p.fim), k = Math.min(1, p.t / p.comp); return [x1 + (x2 - x1) * k, y1 + (y2 - y1) * k]; });
+      const pesos = visiveis.map(i => {
+        const [a, b] = G.arestas[i], [xa, ya] = pos(a), [xb, yb] = pos(b), mx = (xa + xb) / 2, my = (ya + yb) / 2;
+        const idade = agora - (brilhou.get(i) ?? -1e9);
+        if (idade < 6000) return 0.001;                                                  // acabou de brilhar: descansa
+        const justo = Math.min(idade, 30000) / 30000;                                    // quanto mais tempo apagada, mais chance
+        const dmin = ativos.length ? Math.min(...ativos.map(([x, y]) => Math.hypot(x - mx, y - my))) : 1e9;
+        return (0.03 + justo * justo) * (0.15 + 0.85 * Math.min(1, dmin / (240 * esc)));            // longe de outros clarões
+      });
       let r = Math.random() * pesos.reduce((x, y) => x + y, 0);
       for (let k = 0; k < pesos.length; k++) { r -= pesos[k]; if (r <= 0) return visiveis[k]; }
       return visiveis[visiveis.length - 1];
@@ -39,19 +48,19 @@
       brilhou.set(aresta, performance.now());
       const [a, b] = G.arestas[aresta], inicio = de ?? (Math.random() < 0.5 ? a : b), fim = inicio === a ? b : a;
       const [x1, y1] = pos(inicio), [x2, y2] = pos(fim), comp = Math.hypot(x2 - x1, y2 - y1);
-      pulsos.push({ aresta, inicio, fim, t: 0, comp, vel: (270 + Math.random() * 170) * esc, cauda: (44 + Math.random() * 26) * esc });
+      pulsos.push({ aresta, inicio, fim, t: 0, comp, vel: (210 + Math.random() * 140) * esc, cauda: (46 + Math.random() * 26) * esc });
     }
     function seguir(p) {  // ao chegar numa pessoa, acende o nó e segue por outra linha (quase sempre)
       aneis.push({ no: p.fim, t: 0 });
-      const todas = adj[p.fim].filter(i => i !== p.aresta && visiveis.includes(i)), frescas = todas.filter(i => !recente(i, 6000)), opcoes = frescas.length ? frescas : todas;
-      if (opcoes.length && Math.random() < 0.7) novoPulso(opcoes[Math.floor(Math.random() * opcoes.length)], p.fim);
+      const todas = adj[p.fim].filter(i => i !== p.aresta && visiveis.includes(i)), frescas = todas.filter(i => !recente(i, 9000)), opcoes = frescas.length ? frescas : todas;
+      if (opcoes.length && Math.random() < 0.5) novoPulso(opcoes[Math.floor(Math.random() * opcoes.length)], p.fim);
     }
 
     function quadro(agora) {
       if (!rodando) return;
       const dt = Math.min(0.05, (agora - ultimo) / 1000 || 0.016); ultimo = agora;
       if (pulsos.length < maxPulsos() && visiveis.length && agora > proximoNascimento) {
-        novoPulso(escolher()); proximoNascimento = agora + 140 + Math.random() * 300;
+        novoPulso(escolher()); proximoNascimento = agora + 160 + Math.random() * 320;
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineCap = "round";
       for (const a of aneis) a.t += dt;
